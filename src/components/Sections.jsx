@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Search, ChevronDown } from 'lucide-react'
 export const Title = ({ tag, h, p }) => <div className="sec-title"><span>{tag}</span><h2>{h}</h2>{p && <p>{p}</p>}</div>
 export function Img({ src, emoji, alt, cls }) {
@@ -15,10 +15,58 @@ export function Hero() {
   </div></section>
 }
 export function Gallery({ items }) {
+  const trackRef = useRef(null)
+  const paused = useRef(false)
+  const timer = useRef(null)
+  const pos = useRef(0)
+
+  const hold = () => { clearTimeout(timer.current); paused.current = true }
+  const release = (delay = 1800) => {
+    clearTimeout(timer.current)
+    timer.current = setTimeout(() => { paused.current = false }, delay)
+  }
+
+  useEffect(() => {
+    const el = trackRef.current
+    if (!el || items.length < 2) return
+    const SPEED = 35 // pixels per second, change to taste
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    let raf, last = performance.now()
+    const setW = () => el.scrollWidth / 3
+    el.scrollLeft = pos.current = setW()
+
+    const tick = now => {
+      const dt = Math.min(now - last, 50) / 1000
+      last = now
+      const w = setW()
+      if (!paused.current && !reduce && w > el.clientWidth) {
+        pos.current += SPEED * dt
+        if (pos.current >= w * 2) pos.current -= w
+        el.scrollLeft = pos.current
+      } else {
+        // user is touching or swiping: follow them and keep the loop seamless
+        if (!paused.current) {
+          if (el.scrollLeft >= w * 2) el.scrollLeft -= w
+          else if (el.scrollLeft < w * 0.5) el.scrollLeft += w
+        }
+        pos.current = el.scrollLeft
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => { cancelAnimationFrame(raf); clearTimeout(timer.current) }
+  }, [items.length])
+
+  const loop = [...items, ...items, ...items]
   return <section id="gallery"><div className="wrap"><Title tag="Our Work" h="Garden Gallery" p="Real terrace gardens we've created across Coimbatore" />
-    <div className="grid g-gallery">{items.map(g => <figure key={g.id} className="card media">
-      <Img cls="ratio" src={g.mediaType === 'video' ? '' : g.src} emoji="🌿" alt={g.title} />
-      <figcaption><b>{g.title}</b><span>{g.desc}</span></figcaption></figure>)}</div></div></section>
+    <div className="g-marquee" ref={trackRef}
+      onTouchStart={hold} onTouchEnd={() => release()} onTouchCancel={() => release()}
+      onMouseEnter={hold} onMouseLeave={() => release(300)}
+      onWheel={() => { hold(); release() }}>
+      {loop.map((g, i) => <figure key={g.id + '-' + i} className="card media" aria-hidden={i < items.length || i >= items.length * 2}>
+        <Img cls="ratio" src={g.mediaType === 'video' ? '' : g.src} emoji="🌿" alt={g.title} />
+        <figcaption><b>{g.title}</b><span>{g.desc}</span></figcaption></figure>)}
+    </div></div></section>
 }
 export function Services({ items }) {
   return <section id="services" className="alt"><div className="wrap"><Title tag="What We Do" h="Our Services" p="Gardening and landscaping services for homes and outdoor spaces in Coimbatore" />
