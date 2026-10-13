@@ -1,0 +1,368 @@
+{
+ "basic": [
+  {
+   "id": "siru-keerai",
+   "en": "Siru Keerai",
+   "ta": "சிறுகீரை",
+   "cat": "Greens",
+   "qty": 1,
+   "size": "12 in / tray"
+  },
+  {
+   "id": "arai-keerai",
+   "en": "Arai Keerai",
+   "ta": "அரைக்கீரை",
+   "cat": "Greens",
+   "qty": 1,
+   "size": "12 in / tray"
+  },
+  {
+   "id": "palak",
+   "en": "Palak",
+   "ta": "பாலக்கீரை",
+   "cat": "Greens",
+   "qty": 1,
+   "size": "12 in / tray"
+  },
+  {
+   "id": "thandu-keerai",
+   "en": "Thandu Keerai",
+   "ta": "தண்டுக்கீரை",
+   "cat": "Greens",
+   "qty": 1,
+   "size": "12 in / tray"
+  },
+  {
+   "id": "vendhayam-keerai",
+   "en": "Vendhayam Keerai",
+   "ta": "வெந்தயக்கீரை",
+   "cat": "Greens",
+   "qty": 1,
+   "size": "10-12 in / tray"
+  },
+  {
+   "id": "coriander",
+   "en": "Coriander",
+   "ta": "கொத்தமல்லி",
+   "cat": "Herbs and flavour plants",
+   "qty": 1,
+   "size": "10-12 in"
+  },
+  {
+   "id": "mint",
+   "en": "Mint",
+   "ta": "புதினா",
+   "cat": "Herbs and flavour plants",
+   "qty": 1,
+   "size": "12 in"
+  },
+  {
+   "id": "curry-leaf",
+   "en": "Curry Leaf",
+   "ta": "கறிவேப்பிலை",
+   "cat": "Herbs and flavour plants",
+   "qty": 1,
+   "size": "18 in"
+  },
+  {
+   "id": "green-chilli",
+   "en": "Green Chilli",
+   "ta": "பச்சை மிளகாய்",
+   "cat": "Herbs and flavour plants",
+   "qty": 2,
+   "size": "15 in"
+  },
+  {
+   "id": "spring-onion",
+   "en": "Spring Onion",
+   "ta": "வெங்காயத்தாள்",
+   "cat": "Herbs and flavour plants",
+   "qty": 1,
+   "size": "12 in"
+  },
+  {
+   "id": "lemongrass",
+   "en": "Lemongrass",
+   "ta": "எலுமிச்சைப்புல்",
+   "cat": "Herbs and flavour plants",
+   "qty": 1,
+   "size": "15 in"
+  },
+  {
+   "id": "tomato",
+   "en": "Tomato",
+   "ta": "தக்காளி",
+   "cat": "Vegetables",
+   "qty": 2,
+   "size": "15-18 in + stake"
+  },
+  {
+   "id": "brinjal",
+   "en": "Brinjal",
+   "ta": "கத்திரிக்காய்",
+   "cat": "Vegetables",
+   "qty": 1,
+   "size": "15-18 in"
+  },
+  {
+   "id": "bhendi",
+   "en": "Bhendi",
+   "ta": "வெண்டைக்காய்",
+   "cat": "Vegetables",
+   "qty": 2,
+   "size": "15 in"
+  },
+  {
+   "id": "kothavarangai",
+   "en": "Kothavarangai",
+   "ta": "கொத்தவரங்காய்",
+   "cat": "Vegetables",
+   "qty": 1,
+   "size": "15 in"
+  },
+  {
+   "id": "sambar-onion",
+   "en": "Sambar Onion",
+   "ta": "சின்ன வெங்காயம்",
+   "cat": "Vegetables",
+   "qty": 1,
+   "size": "12 in"
+  },
+  {
+   "id": "tulsi",
+   "en": "Tulsi",
+   "ta": "துளசி",
+   "cat": "Everyday pots",
+   "qty": 1,
+   "size": "10-12 in"
+  },
+  {
+   "id": "ginger",
+   "en": "Ginger",
+   "ta": "இஞ்சி",
+   "cat": "Everyday pots",
+   "qty": 1,
+   "size": "15-18 in"
+  },
+  {
+   "id": "turmeric",
+   "en": "Turmeric",
+   "ta": "மஞ்சள்",
+   "cat": "Everyday pots",
+   "qty": 1,
+   "size": "15-18 in"
+  }
+ ],
+ "standard": [
+  {
+   "id": "capsicum",
+   "en": "Capsicum",
+   "ta": "குடைமிளகாய்",
+   "cat": "Vegetables",
+   "qty": 1,
+   "size": "15-18 in"
+  },
+  {
+   "id": "cucumber",
+   "en": "Cucumber",
+   "ta": "வெள்ளரிக்காய்",
+   "cat": "Vegetables",
+   "qty": 1,
+   "size": "18 in + trellis"
+  },
+  {
+   "id": "radish",
+   "en": "Radish",
+   "ta": "முள்ளங்கி",
+   "cat": "Vegetables",
+   "qty": 1,
+   "size": "12 in (deep)"
+  },
+  {
+   "id": "carrot",
+   "en": "Carrot",
+   "ta": "கேரட்",
+   "cat": "Vegetables",
+   "qty": 1,
+   "size": "12 in (deep)"
+  },
+  {
+   "id": "beetroot",
+   "en": "Beetroot",
+   "ta": "பீட்ரூட்",
+   "cat": "Vegetables",
+   "qty": 1,
+   "size": "12-15 in"
+  },
+  {
+   "id": "avarakkai",
+   "en": "Avarakkai",
+   "ta": "அவரைக்காய்",
+   "cat": "Vegetables",
+   "qty": 1,
+   "size": "18 in + trellis"
+  },
+  {
+   "id": "chayote",
+   "en": "Chayote",
+   "ta": "சௌசௌ",
+   "cat": "Vegetables",
+   "qty": 1,
+   "size": "24 in + pandal"
+  },
+  {
+   "id": "kovakkai",
+   "en": "Kovakkai",
+   "ta": "கோவைக்காய்",
+   "cat": "Vegetables",
+   "qty": 1,
+   "size": "18 in + trellis"
+  },
+  {
+   "id": "pirandai",
+   "en": "Pirandai",
+   "ta": "பிரண்டை",
+   "cat": "Extras",
+   "qty": 1,
+   "size": "12-15 in"
+  },
+  {
+   "id": "vallarai",
+   "en": "Vallarai",
+   "ta": "வல்லாரை",
+   "cat": "Extras",
+   "qty": 1,
+   "size": "Shallow tray"
+  },
+  {
+   "id": "aloe-vera",
+   "en": "Aloe vera",
+   "ta": "கற்றாழை",
+   "cat": "Extras",
+   "qty": 1,
+   "size": "12-15 in"
+  },
+  {
+   "id": "marigold",
+   "en": "Marigold",
+   "ta": "செண்டுமல்லி",
+   "cat": "Extras",
+   "qty": 2,
+   "size": "12 in"
+  },
+  {
+   "id": "papaya",
+   "en": "Papaya",
+   "ta": "பப்பாளி",
+   "cat": "Extras",
+   "qty": 1,
+   "size": "24 in"
+  }
+ ],
+ "premium": [
+  {
+   "id": "bitter-gourd",
+   "en": "Bitter Gourd",
+   "ta": "பாகற்காய்",
+   "cat": "Climbers",
+   "qty": 1,
+   "size": "18-24 in + pandal"
+  },
+  {
+   "id": "snake-gourd",
+   "en": "Snake Gourd",
+   "ta": "புடலங்காய்",
+   "cat": "Climbers",
+   "qty": 1,
+   "size": "18-24 in + pandal"
+  },
+  {
+   "id": "bottle-gourd",
+   "en": "Bottle Gourd",
+   "ta": "சுரைக்காய்",
+   "cat": "Climbers",
+   "qty": 1,
+   "size": "18-24 in + pandal"
+  },
+  {
+   "id": "ridge-gourd",
+   "en": "Ridge Gourd",
+   "ta": "பீர்க்கங்காய்",
+   "cat": "Climbers",
+   "qty": 1,
+   "size": "18-24 in + pandal"
+  },
+  {
+   "id": "pumpkin",
+   "en": "Pumpkin",
+   "ta": "பரங்கிக்காய்",
+   "cat": "Climbers",
+   "qty": 1,
+   "size": "24 in + space"
+  },
+  {
+   "id": "murungai",
+   "en": "Murungai",
+   "ta": "முருங்கை",
+   "cat": "Trees and perennials",
+   "qty": 1,
+   "size": "24 in"
+  },
+  {
+   "id": "lemon",
+   "en": "Lemon",
+   "ta": "எலுமிச்சை",
+   "cat": "Trees and perennials",
+   "qty": 1,
+   "size": "24 in"
+  },
+  {
+   "id": "guava",
+   "en": "Guava",
+   "ta": "கொய்யா",
+   "cat": "Trees and perennials",
+   "qty": 1,
+   "size": "24 in"
+  },
+  {
+   "id": "pomegranate",
+   "en": "Pomegranate",
+   "ta": "மாதுளை",
+   "cat": "Trees and perennials",
+   "qty": 1,
+   "size": "24 in"
+  },
+  {
+   "id": "dwarf-banana",
+   "en": "Dwarf Banana",
+   "ta": "வாழை (குட்டை ரகம்)",
+   "cat": "Trees and perennials",
+   "qty": 1,
+   "size": "24 in"
+  },
+  {
+   "id": "agathi",
+   "en": "Agathi",
+   "ta": "அகத்தி",
+   "cat": "Trees and perennials",
+   "qty": 1,
+   "size": "24 in"
+  },
+  {
+   "id": "sweet-potato",
+   "en": "Sweet Potato",
+   "ta": "சர்க்கரைவள்ளிக்கிழங்கு",
+   "cat": "Tubers",
+   "qty": 1,
+   "size": "18 in"
+  },
+  {
+   "id": "colocasia",
+   "en": "Colocasia",
+   "ta": "சேப்பங்கிழங்கு",
+   "cat": "Tubers",
+   "qty": 1,
+   "size": "15-18 in"
+  }
+ ]
+}
