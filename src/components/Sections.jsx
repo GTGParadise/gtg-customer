@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Children } from 'react'
 import { Search, ChevronDown } from 'lucide-react'
 export const Title = ({ tag, h, p }) => <div className="sec-title"><span>{tag}</span><h2>{h}</h2>{p && <p>{p}</p>}</div>
 export function Img({ src, emoji, alt, cls }) {
@@ -14,7 +14,7 @@ export function Hero() {
     <div className="row"><a className="btn primary lg" href="#visit-booking">Book a Site Visit</a><a className="btn light lg" href="#services">Explore Our Services</a></div>
   </div></section>
 }
-export function Gallery({ items }) {
+function Marquee({ items, render }) {
   const trackRef = useRef(null)
   const paused = useRef(false)
   const timer = useRef(null)
@@ -44,7 +44,6 @@ export function Gallery({ items }) {
         if (pos.current >= w * 2) pos.current -= w
         el.scrollLeft = pos.current
       } else {
-        // user is touching or swiping: follow them and keep the loop seamless
         if (!paused.current) {
           if (el.scrollLeft >= w * 2) el.scrollLeft -= w
           else if (el.scrollLeft < w * 0.5) el.scrollLeft += w
@@ -57,44 +56,68 @@ export function Gallery({ items }) {
     return () => { cancelAnimationFrame(raf); clearTimeout(timer.current) }
   }, [items.length])
 
-  const loop = [...items, ...items, ...items]
+  const n = items.length
+  return <div className="g-marquee" ref={trackRef}
+    onTouchStart={hold} onTouchEnd={() => release()} onTouchCancel={() => release()}
+    onMouseEnter={hold} onMouseLeave={() => release(300)}
+    onWheel={() => { hold(); release() }}>
+    {[...items, ...items, ...items].map((it, i) => render(it, i, i < n || i >= n * 2))}
+  </div>
+}
+export function Gallery({ items }) {
   return <section id="gallery"><div className="wrap"><Title tag="Our Work" h="Garden Gallery" p="Real terrace gardens we've created across Coimbatore" />
-    <div className="g-marquee" ref={trackRef}
-      onTouchStart={hold} onTouchEnd={() => release()} onTouchCancel={() => release()}
-      onMouseEnter={hold} onMouseLeave={() => release(300)}
-      onWheel={() => { hold(); release() }}>
-      {loop.map((g, i) => <figure key={g.id + '-' + i} className="card media" aria-hidden={i < items.length || i >= items.length * 2}>
-        <Img cls="ratio" src={g.mediaType === 'video' ? '' : g.src} emoji="🌿" alt={g.title} />
-        <figcaption><b>{g.title}</b><span>{g.desc}</span></figcaption></figure>)}
-    </div></div></section>
+    <Marquee items={items} render={(g, i, hid) => <figure key={g.id + '-' + i} className="card media" aria-hidden={hid}>
+      <Img cls="ratio" src={g.mediaType === 'video' ? '' : g.src} emoji="🌿" alt={g.title} />
+      <figcaption><b>{g.title}</b><span>{g.desc}</span></figcaption></figure>} /></div></section>
 }
 export function Services({ items }) {
   return <section id="services" className="alt"><div className="wrap"><Title tag="What We Do" h="Our Services" p="Gardening and landscaping services for homes and outdoor spaces in Coimbatore" />
-    <div className="grid g-svc">{items.map(s => <article key={s.t} className="card pad"><div className="svc-ic">{s.i}</div><h3>{s.t}</h3><p>{s.d}</p>
-      <a className="link" href="#contact">Enquire →</a></article>)}</div></div></section>
+    <Marquee items={items} render={(s, i, hid) => <article key={s.t + '-' + i} className="card pad" aria-hidden={hid}><div className="svc-ic">{s.i}</div><h3>{s.t}</h3><p>{s.d}</p>
+      <a className="link" href="#contact" tabIndex={hid ? -1 : undefined}>Enquire →</a></article>} /></div></section>
 }
 const CATS = { food: 'Edible plants', ornamental: 'Ornamental plants', indoor: 'Indoor plants' }
-export function Plants({ items, onOrder }) {
+const STEP = 4
+function More({ shown, total, setShown }) {
+  const left = total - shown
+  if (total <= STEP) return null
+  return <div className="more">{left > 0
+    ? <button className="btn outline" aria-expanded="false" onClick={() => setShown(n => n + STEP)}>Show {Math.min(STEP, left)} more <ChevronDown size={18} /></button>
+    : <button className="btn outline" aria-expanded="true" onClick={() => setShown(STEP)}>Show less <ChevronDown size={18} className="rot" /></button>}</div>
+}
+const Item = ({ p, children }) => <article className="card item"><Img cls="ratio sq" src={p.img} emoji={p.emoji} alt={p.name} />
+  <div className="pad"><b>{p.name}</b>{children}{p.desc && <p className="desc">{p.desc}</p>}{p.price ? <span className="price">₹{p.price}</span> : null}</div></article>
+function PlantGroup({ title, list }) {
+  const [shown, setShown] = useState(STEP)
+  return <div><h3 className="cat">{title}</h3><div className="grid g-items">
+    {list.slice(0, shown).map(p => <Item key={p.id} p={p}>{p.sci && <i>{p.sci}</i>}</Item>)}</div>
+    <More shown={shown} total={list.length} setShown={setShown} /></div>
+}
+export function Plants({ items }) {
   const types = [...new Set(items.map(p => p.type))]
   return <section id="plants"><div className="wrap"><Title tag="Our Collection" h="Plants We Install" p="A curated selection of plants perfect for Coimbatore's climate" />
-    {types.map(t => <div key={t}><h3 className="cat">{CATS[t] || t}</h3><div className="grid g-items">
-      {items.filter(p => p.type === t).map(p => <article key={p.id} className="card item"><Img cls="ratio sq" src={p.img} emoji={p.emoji} alt={p.name} />
-        <div className="pad"><b>{p.name}</b>{p.sci && <i>{p.sci}</i>}{p.price ? <span className="price">₹{p.price}</span> : null}</div></article>)}</div></div>)}
-    <div className="center"><button className="btn primary" onClick={onOrder}>Order plants &amp; materials</button></div></div></section>
+    {types.map(t => <PlantGroup key={t} title={CATS[t] || t} list={items.filter(p => p.type === t)} />)}</div></section>
 }
-export function Materials({ items, onOrder }) {
-  const [q, setQ] = useState(''); const list = items.filter(m => m.name.toLowerCase().includes(q.toLowerCase()))
+export function Materials({ items }) {
+  const [q, setQ] = useState(''); const [shown, setShown] = useState(STEP)
+  const list = items.filter(m => m.name.toLowerCase().includes(q.toLowerCase()))
   return <section id="materials" className="alt"><div className="wrap"><Title tag="Installation Materials" h="Materials We Use" p="High-quality components chosen for durability and plant health" />
-    <div className="search"><Search size={18} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search materials…" aria-label="Search materials" /></div>
-    {list.length ? <div className="grid g-items">{list.map(m => <article key={m.id} className="card item"><Img cls="ratio sq" src={m.img} emoji={m.emoji} alt={m.name} />
-      <div className="pad"><b>{m.name}</b>{m.price ? <span className="price">₹{m.price}</span> : null}</div></article>)}</div> : <p className="muted center">No materials match “{q}”.</p>}
-    <div className="center"><button className="btn primary" onClick={onOrder}>Order plants &amp; materials</button></div></div></section>
+    <div className="search"><Search size={18} /><input value={q} onChange={e => { setQ(e.target.value); setShown(STEP) }} placeholder="Search materials…" aria-label="Search materials" /></div>
+    {list.length ? <><div className="grid g-items">{list.slice(0, shown).map(m => <Item key={m.id} p={m} />)}</div>
+      <More shown={shown} total={list.length} setShown={setShown} /></> : <p className="muted center">No materials match “{q}”.</p>}</div></section>
+}
+export function Snap({ children }) {
+  const ref = useRef(null), n = Children.count(children)
+  useEffect(() => {
+    const el = ref.current, k = el && el.children[Math.floor((n - 1) / 2)]
+    if (k) el.scrollLeft = k.offsetLeft - (el.clientWidth - k.offsetWidth) / 2
+  }, [n])
+  return <div className="snap" ref={ref}>{children}</div>
 }
 export function Packages({ items, onPick }) {
   return <section id="packages"><div className="wrap"><Title tag="Maintenance Plans" h="Maintenance Packages" p="Choose a plan that fits your garden and budget" />
-    <div className="grid g-pkg">{items.map(p => <article key={p.id} className={'card pad pkg' + (p.featured ? ' feat' : '')}>
+    <Snap>{items.map(p => <article key={p.id} className={'card pad pkg' + (p.featured ? ' feat' : '')}>
       {p.featured && <span className="badge">Most popular</span>}<h3>{p.name}</h3><div className="pkg-price">₹{Number(p.price).toLocaleString('en-IN')}<small> {p.period}</small></div>
-      <ul>{(p.features || []).map(f => <li key={f}>{f}</li>)}</ul><button className={'btn full ' + (p.featured ? 'primary' : 'outline')} onClick={() => onPick(p)}>Choose plan</button></article>)}</div></div></section>
+      <ul>{(p.features || []).map(f => <li key={f}>{f}</li>)}</ul><button className={'btn full ' + (p.featured ? 'primary' : 'outline')} onClick={() => onPick(p)}>Choose plan</button></article>)}</Snap></div></section>
 }
 const WHY = [['Local to Coimbatore', "We plan gardens around Coimbatore's climate and your space."], ['Free Quotation', 'Tell us your requirements and we will share a quotation.'],
   ['Easy to Reach', 'Call, WhatsApp or email us directly.'], ['Setup to Upkeep', 'From first plan to ongoing maintenance.']]
