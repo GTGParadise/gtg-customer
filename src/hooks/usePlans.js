@@ -64,7 +64,7 @@ export function usePlans() {
     inflight ||= load()
     inflight
       .then(r => { cache = r; setPlans(r) })
-      .catch(e => { console.error('usePlans:', e); inflight = null; setError('Could not load plans. Please try again.') })
+      .catch(e => { console.error('usePlans:', e); inflight = null; setError('Could not load plans: ' + (e?.message || 'unknown error')) })
       .finally(() => setLoading(false))
   }, [])
 
