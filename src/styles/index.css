@@ -58,3 +58,25 @@ footer{background:var(--primary);color:#E2E8DF;text-align:center;padding:44px 0}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.stats div{background:var(--bg);border-radius:12px;padding:10px;text-align:center}.stats b{display:block;font:700 22px var(--serif);color:var(--primary)}.stats span{font-size:12px;color:var(--muted)}
 .modal h4{margin:14px 0 4px;font-size:14px;color:var(--primary)}.gh{border-bottom:2px solid var(--border);padding-bottom:4px}.tabs.sm button{font-size:12px;padding:8px 6px}
 .pl{width:100%;border-collapse:collapse;font-size:14px;min-width:380px}.pl th{text-align:left;font-size:12px;color:var(--muted);padding:6px 4px}.pl td{padding:8px 4px;border-top:1px solid var(--border);vertical-align:top}.pl small{display:block;color:var(--muted)}.tg{font:600 10px var(--font);font-style:normal;background:#E2E8DF;border-radius:999px;padding:2px 8px;margin-left:6px}.tg.new{background:var(--accent);color:#fff}.total{margin:14px 0;text-align:right}.modal .row{margin-top:8px}
+
+/* Garden Gallery: auto-scrolling marquee. Append to the END of src/styles/index.css. */
+.gal{width:100%;min-width:0;margin-top:28px}
+.gal-viewport{
+  width:100%;max-width:100%;
+  overflow-x:auto;overflow-y:hidden;
+  scroll-behavior:auto;              /* html has smooth scrolling; the loop needs instant moves */
+  overscroll-behavior-x:contain;     /* no accidental browser back-swipe */
+  touch-action:pan-x pan-y;          /* horizontal swipe here, vertical page scroll still works */
+  scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;-webkit-user-select:none;
+  cursor:grab;padding:6px 0 12px;    /* room for card shadows */
+}
+.gal-viewport::-webkit-scrollbar{display:none}
+.gal-viewport.dragging{cursor:grabbing}
+.gal-viewport:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:var(--r)}
+.gal-track{display:flex;gap:16px;width:max-content}
+.gal-item{flex:0 0 auto;width:clamp(240px,78vw,300px)}
+@media(min-width:700px){.gal-item{width:300px}}
+@media(min-width:1100px){.gal-item{width:320px}}
+.gal .ratio{display:block;pointer-events:none;-webkit-user-drag:none;user-select:none}
