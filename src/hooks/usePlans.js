@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '../lib/supabase' // must export the Supabase client as `supabase`
+import { supabase, configured } from '../lib/supabase'
 
 let cache = null, inflight = null
 
 async function load() {
+  if (!configured) throw new Error('Backend not configured: set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
   const [p, pp, pl] = await Promise.all([
     supabase.from('plans').select('*').order('sort_order'),
     supabase.from('plan_plants').select('plan_id, plant_id, qty'),
@@ -44,6 +45,13 @@ async function load() {
       addedCount, inheritedCount: plants.length - addedCount,
     }
   })
+}
+
+// For non-React callers (e.g. PDF export): returns the same cached DB data.
+export async function fetchPlans() {
+  if (cache) return cache
+  inflight ||= load()
+  try { cache = await inflight; return cache } catch (e) { inflight = null; throw e }
 }
 
 export function usePlans() {
