@@ -1,49 +1,73 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase' // adjust if your client is exported differently
+import { useEffect, useState, useCallback } from 'react'
+import { supabase } from '../lib/supabase' // must export the Supabase client as `supabase`
 
-let cache = null
-let catOrder = []
-export function loadPlans() {
-  if (!cache) cache = fetchAll().catch(e => { cache = null; throw e })
-  return cache
-}
-export const refreshPlans = () => { cache = null; return loadPlans() }
+let cache = null, inflight = null
 
-async function fetchAll() {
-  const [p, pl, a, c] = await Promise.all([
-    supabase.from('subscription_plans').select('*').order('sort_order'),
-    supabase.from('subscription_plants').select('*').order('sort_order'),
-    supabase.from('subscription_addons').select('*').order('sort_order'),
-    supabase.from('subscription_categories').select('*').order('sort_order')])
-  const err = p.error || pl.error || a.error || c.error
+async function load() {
+  const [p, pp, pl] = await Promise.all([
+    supabase.from('plans').select('*').order('sort_order'),
+    supabase.from('plan_plants').select('plan_id, plant_id, qty'),
+    supabase.from('plants').select('*').eq('is_active', true),
+  ])
+  const err = p.error || pp.error || pl.error
   if (err) throw err
-  catOrder = c.data.map(x => x.name)
-  const rank = Object.fromEntries(p.data.map(x => [x.id, x.sort_order]))
-  const plans = p.data.map(r => {
-    const plants = pl.data.filter(x => rank[x.plan_id] <= r.sort_order)
-      .map(x => ({ id: x.id, from: x.plan_id, cat: x.category, en: x.name_en, ta: x.name_ta, qty: x.qty, size: x.pot_size }))
-    const addedCount = plants.filter(x => x.from === r.id).length
-    return { id: r.id, name: r.name, title: r.title, level: r.level, emoji: r.emoji, blurb: r.blurb, approx: r.approx_plants,
-      visits: r.visits || '', space: r.space, yield: r.monthly_yield, bestFor: r.best_for, services: r.services || [], plants,
-      totalPots: plants.reduce((s, x) => s + (x.qty || 0), 0), species: plants.length, addedCount, inheritedCount: plants.length - addedCount }
+
+  const plantMap = new Map(pl.data.map(x => [x.id, x]))
+  const byPlan = {}
+  pp.data.forEach(r => (byPlan[r.plan_id] ||= []).push(r))
+
+  // Plans are cumulative: a plant is "new" in the first plan (by sort_order) that lists it.
+  const running = new Map() // plantId -> { qty, from }
+  return p.data.map((row, i) => {
+    ;(byPlan[row.id] || []).forEach(r => {
+      if (!plantMap.has(r.plant_id)) return
+      const cur = running.get(r.plant_id)
+      running.set(r.plant_id, { qty: r.qty, from: cur ? cur.from : row.id })
+    })
+    const plants = [...running].map(([id, v]) => {
+      const x = plantMap.get(id)
+      return {
+        id, en: x.name, ta: x.tamil_name, category: x.category || 'Other',
+        qty: v.qty, size: x.container, from: v.from, image: x.image_path,
+        regrows: x.regrows, harvestMin: x.harvest_days_min, harvestMax: x.harvest_days_max,
+      }
+    })
+    const totalPots = plants.reduce((s, x) => s + x.qty, 0)
+    const addedCount = plants.filter(x => x.from === row.id).length
+    return {
+      level: `Tier ${i + 1}`, title: '', blurb: '', emoji: '🌱', visits: '',
+      space: '', yield: '',
+      ...row,
+      bestFor: row.best_for ?? row.bestFor ?? '',
+      services: row.services || [],
+      plants, totalPots, approx: totalPots, species: plants.length,
+      addedCount, inheritedCount: plants.length - addedCount,
+    }
   })
-  return { plans, addOns: a.data.map(x => ({ group: x.group_name, items: x.items || [] })) }
 }
 
 export function usePlans() {
-  const [s, setS] = useState({ plans: [], addOns: [], loading: true, error: '' })
+  const [plans, setPlans] = useState(cache || [])
+  const [loading, setLoading] = useState(!cache)
+  const [error, setError] = useState('')
+
   useEffect(() => {
-    let on = true
-    loadPlans().then(d => on && setS({ ...d, loading: false, error: '' }))
-      .catch(() => on && setS(x => ({ ...x, loading: false, error: 'Could not load plans. Please try again.' })))
-    return () => { on = false }
+    if (cache) return
+    inflight ||= load()
+    inflight
+      .then(r => { cache = r; setPlans(r) })
+      .catch(e => { console.error('usePlans:', e); inflight = null; setError('Could not load plans. Please try again.') })
+      .finally(() => setLoading(false))
   }, [])
-  return { ...s, getPlan: id => s.plans.find(p => p.id === id) }
+
+  const getPlan = useCallback(id => plans.find(p => p.id === id), [plans])
+  return { plans, addOns: [], loading, error, getPlan }
 }
-export const planLabel = p => `${p.name} — ${p.title}`
+
+export const planLabel = p => (p.title ? `${p.name} — ${p.title}` : p.name)
+
 export function groupByCategory(list) {
   const m = new Map()
-  list.forEach(p => { if (!m.has(p.cat)) m.set(p.cat, []); m.get(p.cat).push(p) })
-  const rank = c => { const i = catOrder.indexOf(c); return i < 0 ? 999 : i }
-  return [...m].map(([cat, items]) => ({ cat, items })).sort((x, y) => rank(x.cat) - rank(y.cat))
+  list.forEach(x => { if (!m.has(x.category)) m.set(x.category, []); m.get(x.category).push(x) })
+  return [...m].map(([cat, items]) => ({ cat, items }))
 }
