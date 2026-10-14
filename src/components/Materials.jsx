@@ -41,7 +41,7 @@ export function Materials({ items = [] }) {
       .eq('is_active', true)                       // remove if your table has no is_active column
       .order('name', { ascending: true })
       .then(({ data }) => {
-        if (off || !data || !data.length) return
+        if (off || !data) return
         setRows(data.map(r => ({
           id: r.id,
           name: r.name,
@@ -56,8 +56,12 @@ export function Materials({ items = [] }) {
     return () => { off = true }
   }, [])
 
-  const all = rows.length ? rows : items
+  // Backend configured: show only what is in the table (empty table = empty section).
+  // Not configured: fall back to the bundled defaults passed from App.jsx.
+  const all = configured ? rows : items
   const list = all.filter(m => String(m.name || '').toLowerCase().includes(q.toLowerCase()))
+
+  if (configured && !rows.length) return null   // hide the section until the table has rows
 
   return <section id="materials" className="alt"><div className="wrap">
     <Title tag="Installation Materials" h="Materials We Use" p="High-quality components chosen for durability and plant health" />
