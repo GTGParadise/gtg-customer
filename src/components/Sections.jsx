@@ -91,7 +91,7 @@ export function Gallery() {
       </figcaption></figure>} /></div></section>
 }
 
-const CATS = { food: 'Edible plants', ornamental: 'Ornamental plants', indoor: 'Indoor plants' }
+// Plants moved to components/Plants.jsx (it has its own copies of the helpers below).
 const STEP = 4
 function More({ shown, total, setShown }) {
   const left = total - shown
@@ -102,17 +102,6 @@ function More({ shown, total, setShown }) {
 }
 const Item = ({ p, children }) => <article className="card item"><Img cls="ratio sq" src={p.img} emoji={p.emoji} alt={p.name} />
   <div className="pad"><b>{p.name}</b>{children}{p.desc && <p className="desc">{p.desc}</p>}{p.price ? <span className="price">₹{p.price}</span> : null}</div></article>
-function PlantGroup({ title, list }) {
-  const [shown, setShown] = useState(STEP)
-  return <div><h3 className="cat">{title}</h3><div className="grid g-items">
-    {list.slice(0, shown).map(p => <Item key={p.id} p={p}>{p.sci && <i>{p.sci}</i>}</Item>)}</div>
-    <More shown={shown} total={list.length} setShown={setShown} /></div>
-}
-export function Plants({ items = [] }) {
-  const types = [...new Set(items.map(p => p.type))]
-  return <section id="plants"><div className="wrap"><Title tag="Our Collection" h="Plants We Install" p="A curated selection of plants perfect for Coimbatore's climate" />
-    {types.map(t => <PlantGroup key={t} title={CATS[t] || t} list={items.filter(p => p.type === t)} />)}</div></section>
-}
 export function Materials({ items = [] }) {
   const [q, setQ] = useState(''); const [shown, setShown] = useState(STEP)
   const list = items.filter(m => String(m.name || '').toLowerCase().includes(q.toLowerCase()))
