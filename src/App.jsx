@@ -6,8 +6,9 @@ import { configured } from './lib/supabase'
 import Header from './components/Header'
 import AuthModal from './components/AuthModal'
 import Home from './components/Home'
-import { Gallery, Materials, Packages, About } from './components/Sections'
+import { Gallery, Packages, About } from './components/Sections'
 import { Plants } from './components/Plants'
+import { Materials } from './components/Materials'
 import { Services } from './components/Services'
 import { BookVisit, Contact, PlanModal } from './components/Forms'
 import { OrderModal, MineModal } from './components/Orders'
@@ -55,4 +56,5 @@ function Shell() {
     {toastMsg && <div className="toast" role="status">{toastMsg}</div>}
   </>
 }
-export default function App() { return <AuthProvider><Shell /></AuthProvider> }
+export default function App() { return <AuthProvider><Shell /></AuthProvider>
+                              }
