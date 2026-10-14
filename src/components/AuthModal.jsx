@@ -1,7 +1,7 @@
-
 import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import Modal, { Field } from './Modal'
+import PhoneInput, { isValidPhone, toFullPhone } from './PhoneInput'
 import { useAuth } from '../hooks/useAuth'
 
 function normalizeEmail(email) {
@@ -61,10 +61,14 @@ export default function AuthModal({ mode: m0, onClose, toast }) {
     }
 
     if (mode === 'register') {
-      if (!f.name.trim() || !f.whatsapp.trim()) {
+      if (!f.name.trim() || !f.whatsapp) {
         return setErr(
           'Name and WhatsApp number are required.'
         )
+      }
+
+      if (!isValidPhone(f.whatsapp)) {
+        return setErr('Enter a valid 10-digit WhatsApp number.')
       }
 
       if (!f.confirmPassword) {
@@ -86,7 +90,7 @@ export default function AuthModal({ mode: m0, onClose, toast }) {
               email,
               f.password,
               f.name.trim(),
-              f.whatsapp.trim(),
+              toFullPhone(f.whatsapp),
               f.location.trim()
             )
 
@@ -158,13 +162,13 @@ export default function AuthModal({ mode: m0, onClose, toast }) {
             </Field>
 
             <Field label="WhatsApp number">
-              <input
-                type="tel"
+              <PhoneInput
                 value={f.whatsapp}
-                onChange={set('whatsapp')}
-                autoComplete="tel"
-                placeholder="+91 XXXXX XXXXX"
-                required
+                onChange={v => {
+                  setF(prev => ({ ...prev, whatsapp: v }))
+                  if (err) setErr('')
+                }}
+                name="whatsapp"
               />
             </Field>
 
