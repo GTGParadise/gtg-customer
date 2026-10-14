@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, Children } from 'react'
-import { Search, ChevronDown } from 'lucide-react'
+import { Search, ChevronDown, MapPin } from 'lucide-react'
+import { supabase, configured } from '../lib/supabase'
+
 export const Title = ({ tag, h, p }) => <div className="sec-title"><span>{tag}</span><h2>{h}</h2>{p && <p>{p}</p>}</div>
 export function Img({ src, emoji, alt, cls }) {
   const [bad, setBad] = useState(!src)
@@ -7,7 +9,9 @@ export function Img({ src, emoji, alt, cls }) {
     : <img className={cls} src={src} alt={alt} loading="lazy" onError={() => setBad(true)} />
 }
 // Hero moved to components/Home.jsx
-function Marquee({ items, render }) {
+
+// Marquee: the auto-scrolling, looping strip used by the gallery and Services.
+export function Marquee({ items = [], render }) {
   const trackRef = useRef(null)
   const paused = useRef(false)
   const timer = useRef(null)
@@ -57,13 +61,37 @@ function Marquee({ items, render }) {
     {[...items, ...items, ...items].map((it, i) => render(it, i, i < n || i >= n * 2))}
   </div>
 }
-export function Gallery({ items }) {
+
+// Gallery: photos come from Supabase Storage (BUCKET); title, description and
+// location come from the gallery_photos table. With no rows, the section stays hidden.
+const BUCKET = 'gallery'
+const TABLE = 'gallery_photos'
+export function Gallery() {
+  const [items, setItems] = useState([])
+  useEffect(() => {
+    if (!configured) return
+    let off = false
+    supabase.from(TABLE).select('*')
+      .order('sort_order', { ascending: true }).order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (off || !data) return
+        setItems(data.map(r => ({ ...r,
+          src: r.image_path ? supabase.storage.from(BUCKET).getPublicUrl(r.image_path).data.publicUrl : '' })))
+      }).catch(() => {})
+    return () => { off = true }
+  }, [])
+  if (!items.length) return null
   return <section id="gallery"><div className="wrap"><Title tag="Our Work" h="Garden Gallery" p="Real terrace gardens we've created across Coimbatore" />
     <Marquee items={items} render={(g, i, hid) => <figure key={g.id + '-' + i} className="card media" aria-hidden={hid}>
-      <Img cls="ratio" src={g.mediaType === 'video' ? '' : g.src} emoji="🌿" alt={g.title} />
-      <figcaption><b>{g.title}</b><span>{g.desc}</span></figcaption></figure>} /></div></section>
+      <Img cls="ratio" src={g.src} emoji="🌿" alt={g.title || 'Garden photo'} />
+      <figcaption>
+        {g.title && <b>{g.title}</b>}
+        {g.description && <span>{g.description}</span>}
+        {g.location && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={14} />{g.location}</span>}
+      </figcaption></figure>} /></div></section>
 }
-export function Services({ items }) {
+
+export function Services({ items = [] }) {
   return <section id="services" className="alt"><div className="wrap"><Title tag="What We Do" h="Our Services" p="Gardening and landscaping services for homes and outdoor spaces in Coimbatore" />
     <Marquee items={items} render={(s, i, hid) => <article key={s.t + '-' + i} className="card pad" aria-hidden={hid}><div className="svc-ic">{s.i}</div><h3>{s.t}</h3><p>{s.d}</p>
       <a className="link" href="#contact" tabIndex={hid ? -1 : undefined}>Enquire →</a></article>} /></div></section>
@@ -85,14 +113,14 @@ function PlantGroup({ title, list }) {
     {list.slice(0, shown).map(p => <Item key={p.id} p={p}>{p.sci && <i>{p.sci}</i>}</Item>)}</div>
     <More shown={shown} total={list.length} setShown={setShown} /></div>
 }
-export function Plants({ items }) {
+export function Plants({ items = [] }) {
   const types = [...new Set(items.map(p => p.type))]
   return <section id="plants"><div className="wrap"><Title tag="Our Collection" h="Plants We Install" p="A curated selection of plants perfect for Coimbatore's climate" />
     {types.map(t => <PlantGroup key={t} title={CATS[t] || t} list={items.filter(p => p.type === t)} />)}</div></section>
 }
-export function Materials({ items }) {
+export function Materials({ items = [] }) {
   const [q, setQ] = useState(''); const [shown, setShown] = useState(STEP)
-  const list = items.filter(m => m.name.toLowerCase().includes(q.toLowerCase()))
+  const list = items.filter(m => String(m.name || '').toLowerCase().includes(q.toLowerCase()))
   return <section id="materials" className="alt"><div className="wrap"><Title tag="Installation Materials" h="Materials We Use" p="High-quality components chosen for durability and plant health" />
     <div className="search"><Search size={18} /><input value={q} onChange={e => { setQ(e.target.value); setShown(STEP) }} placeholder="Search materials…" aria-label="Search materials" /></div>
     {list.length ? <><div className="grid g-items">{list.slice(0, shown).map(m => <Item key={m.id} p={m} />)}</div>
@@ -106,7 +134,7 @@ export function Snap({ children }) {
   }, [n])
   return <div className="snap" ref={ref}>{children}</div>
 }
-export function Packages({ items, onPick }) {
+export function Packages({ items = [], onPick }) {
   return <section id="packages"><div className="wrap"><Title tag="Maintenance Plans" h="Maintenance Packages" p="Choose a plan that fits your garden and budget" />
     <Snap>{items.map(p => <article key={p.id} className={'card pad pkg' + (p.featured ? ' feat' : '')}>
       {p.featured && <span className="badge">Most popular</span>}<h3>{p.name}</h3><div className="pkg-price">₹{Number(p.price).toLocaleString('en-IN')}<small> {p.period}</small></div>
