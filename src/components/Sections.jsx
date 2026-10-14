@@ -6,14 +6,7 @@ export function Img({ src, emoji, alt, cls }) {
   return bad ? <div className={'ph ' + (cls || '')} aria-label={alt}>{emoji || '🌿'}</div>
     : <img className={cls} src={src} alt={alt} loading="lazy" onError={() => setBad(true)} />
 }
-export function Hero() {
-  return <section className="hero" id="home"><div className="wrap">
-    <span className="tag">Gardening Services in Coimbatore</span>
-    <h1>Transform Your Space into a <em>Green Paradise</em></h1>
-    <p>Professional gardening solutions for homes, terraces, balconies, and outdoor spaces in Coimbatore</p>
-    <div className="row"><a className="btn primary lg" href="#visit-booking">Book a Site Visit</a><a className="btn light lg" href="#services">Explore Our Services</a></div>
-  </div></section>
-}
+// Hero moved to components/Home.jsx
 function Marquee({ items, render }) {
   const trackRef = useRef(null)
   const paused = useRef(false)
