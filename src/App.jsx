@@ -31,7 +31,7 @@ function Shell() {
     {!configured && <div className="banner">Backend not configured: set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY. Showing built-in content; sign-in, orders and bookings are disabled.</div>}
     {cat.status === 'error' && <div className="banner">Could not load live data. Showing built-in content.</div>}
     <main>
-      {on('hero') && <Home />}
+      {on('hero') && <Home image={cat.site?.heroImage} />}
       {on('gallery') && <Gallery items={cat.gallery} />}
       {on('services') && <Services items={services} />}
       {on('plants') && <Plants items={cat.plants} onOrder={guard(() => setModal({ t: 'order' }))} />}
