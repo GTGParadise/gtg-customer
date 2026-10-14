@@ -91,11 +91,6 @@ export function Gallery() {
       </figcaption></figure>} /></div></section>
 }
 
-export function Services({ items = [] }) {
-  return <section id="services" className="alt"><div className="wrap"><Title tag="What We Do" h="Our Services" p="Gardening and landscaping services for homes and outdoor spaces in Coimbatore" />
-    <Marquee items={items} render={(s, i, hid) => <article key={s.t + '-' + i} className="card pad" aria-hidden={hid}><div className="svc-ic">{s.i}</div><h3>{s.t}</h3><p>{s.d}</p>
-      <a className="link" href="#contact" tabIndex={hid ? -1 : undefined}>Enquire →</a></article>} /></div></section>
-}
 const CATS = { food: 'Edible plants', ornamental: 'Ornamental plants', indoor: 'Indoor plants' }
 const STEP = 4
 function More({ shown, total, setShown }) {
