@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Home as HomeIcon, Building2, Flower2, Trees, Scissors, Leaf, Bell } from 'lucide-react'
+import { Home as HomeIcon, Building2, Flower2, Trees, Scissors, Leaf } from 'lucide-react'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { useCatalog } from './hooks/useCatalog'
 import { useNotifications } from './hooks/useNotifications'
@@ -9,6 +9,8 @@ import AuthModal from './components/AuthModal'
 import Home from './components/Home'
 import { Gallery } from './components/Sections'
 import About from './components/About'
+import SocialDock from './components/SocialDock'
+import NotificationBell from './components/NotificationBell'
 import { Plants } from './components/Plants'
 import { Materials } from './components/Materials'
 import { Plans } from './components/Plans'
@@ -34,7 +36,8 @@ function Shell() {
   const on = k => cat.site?.sections?.[k] !== false
   const services = cat.site?.services?.length ? cat.site.services.map(s => ({ i: <Leaf />, t: s.title, d: s.description })) : SERVICES
   return <>
-    <Header openAuth={openAuth} openOrder={() => setModal({ t: 'order' })} openMine={() => setModal({ t: 'mine' })} />
+    <Header openAuth={openAuth} openOrder={() => setModal({ t: 'order' })} openMine={() => setModal({ t: 'mine' })}
+      right={user && <NotificationBell unread={notif.unread} onClick={() => setModal({ t: 'notifs' })} />} />
     {!configured && <div className="banner">Backend not configured: set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY. Showing built-in content; sign-in, orders and bookings are disabled.</div>}
     {cat.status === 'error' && <div className="banner">Could not load live data. Showing built-in content.</div>}
     <main>
@@ -49,13 +52,7 @@ function Shell() {
     </main>
     <footer><div className="wrap"><div className="logo light"><Leaf size={24} /><span><b>GTG Paradise</b><small>Grow to Green</small></span></div>
       <p>Coimbatore's trusted terrace &amp; balcony garden specialists</p><p className="copy">© {new Date().getFullYear()} GTG Paradise, Coimbatore. All rights reserved.</p></div></footer>
-    {user && (
-      <button onClick={() => setModal({ t: 'notifs' })} aria-label="Notifications"
-        style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 900, width: 52, height: 52, borderRadius: '50%', border: 0, background: '#1f6b3a', color: '#fff', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,.25)' }}>
-        <Bell size={22} />
-        {notif.unread > 0 && <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, padding: '0 5px', borderRadius: 10, background: '#e53935', color: '#fff', fontSize: 12, lineHeight: '20px' }}>{notif.unread}</span>}
-      </button>
-    )}
+    <SocialDock />
     {modal?.t === 'auth' && <AuthModal mode={modal.m} onClose={() => setModal(null)} toast={toast} />}
     {modal?.t === 'order' && user && <OrderModal plants={cat.plants} materials={cat.materials} onClose={() => setModal(null)} toast={toast} openMine={() => setModal({ t: 'mine' })} />}
     {modal?.t === 'mine' && user && <MineModal onClose={() => setModal(null)} tick={tick} />}
