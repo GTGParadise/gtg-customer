@@ -34,7 +34,6 @@ export function Services({ items = [] }) {
         {s.src ? <Img cls="ratio" src={s.src} emoji="🌿" alt={s.t} /> : <div className="svc-ic">{s.i}</div>}
         <h3>{s.t}</h3>
         {s.d && <p>{s.d}</p>}
-        <a className="link" href="#contact" tabIndex={hid ? -1 : undefined}>Enquire →</a>
       </article>} />
   </div></section>
 }
