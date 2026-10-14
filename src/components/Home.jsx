@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase, configured } from '../lib/supabase'
 
-// Background photo is read from Supabase Storage: BUCKET / FOLDER. The newest image in the folder is used.
-const BUCKET = 'images'          // <- change to your storage bucket name
-const FOLDER = 'home-page-bg'
+// Background photo is read from the Supabase Storage bucket 'home-page-bg'. The newest image in it is used.
+const BUCKET = 'home-page-bg'
+const FOLDER = ''               // files sit at the top level of the bucket
 const IMG = /\.(jpe?g|png|webp|avif)$/i
 
 function useStorageBg() {
@@ -13,10 +13,10 @@ function useStorageBg() {
   useEffect(() => {
     if (!configured) return
     let off = false
-    supabase.storage.from(BUCKET).list(FOLDER, { limit: 50, sortBy: { column: 'created_at', order: 'desc' } })
+    supabase.storage.from(BUCKET).list(FOLDER || undefined, { limit: 50, sortBy: { column: 'created_at', order: 'desc' } })
       .then(({ data }) => {
         const f = (data || []).find(x => IMG.test(x.name))
-        if (f && !off) setUrl(supabase.storage.from(BUCKET).getPublicUrl(FOLDER + '/' + f.name).data.publicUrl)
+        if (f && !off) setUrl(supabase.storage.from(BUCKET).getPublicUrl(FOLDER ? FOLDER + '/' + f.name : f.name).data.publicUrl)
       }).catch(() => {})
     return () => { off = true }
   }, [])
