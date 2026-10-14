@@ -32,7 +32,7 @@ function Shell() {
     {cat.status === 'error' && <div className="banner">Could not load live data. Showing built-in content.</div>}
     <main>
       {on('hero') && <Home image={cat.site?.heroImage} />}
-      {on('gallery') && <Gallery items={cat.gallery} />}
+      {on('gallery') && <Gallery />}
       {on('services') && <Services items={services} />}
       {on('plants') && <Plants items={cat.plants} onOrder={guard(() => setModal({ t: 'order' }))} />}
       {on('materials') && <Materials items={cat.materials} onOrder={guard(() => setModal({ t: 'order' }))} />}
