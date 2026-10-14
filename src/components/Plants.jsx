@@ -6,8 +6,8 @@ import { Title, Img } from './Sections'
 // Plants come from the `plants` table (photos in the `plants` Storage bucket).
 // If the table has no rows (or the backend is not configured), the `items`
 // passed from App.jsx (config row / bundled defaults) are shown instead.
-const BUCKET = 'plants'
-const TABLE = 'plants'
+const BUCKET = 'plants'   // change if your photos are in another bucket
+const TABLE = 'plants'    // change to your actual table name
 const STEP = 4
 const CATS = { food: 'Edible plants', ornamental: 'Ornamental plants', indoor: 'Indoor plants' }
 
@@ -42,6 +42,8 @@ function PlantGroup({ title, list }) {
   </div>
 }
 
+const days = (a, b) => (a && b ? (a === b ? `${a} days` : `${a}–${b} days`) : '')
+
 export function Plants({ items = [] }) {
   const [rows, setRows] = useState([])
 
@@ -49,17 +51,22 @@ export function Plants({ items = [] }) {
     if (!configured) return
     let off = false
     supabase.from(TABLE).select('*')
-      .order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+      .eq('is_active', true)
+      .order('category', { ascending: true }).order('name', { ascending: true })
       .then(({ data }) => {
         if (off || !data || !data.length) return
-        setRows(data.filter(r => r.active !== false).map(r => ({
+        setRows(data.map(r => ({
           id: r.id,
           name: r.name,
-          sci: r.scientific_name || '',
-          type: r.type || 'ornamental',
-          desc: r.description || '',
-          price: r.price,
-          emoji: r.emoji || '🌿',
+          sci: r.tamil_name || '',
+          type: r.category || 'Other',
+          desc: [
+            days(r.harvest_days_min, r.harvest_days_max) && `Harvest in ${days(r.harvest_days_min, r.harvest_days_max)}`,
+            r.container,
+            r.regrows ? 'Regrows after cutting' : ''
+          ].filter(Boolean).join(' · '),
+          price: null,
+          emoji: '🌿',
           img: r.image_path
             ? supabase.storage.from(BUCKET).getPublicUrl(r.image_path).data.publicUrl
             : ''
