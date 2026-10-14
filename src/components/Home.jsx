@@ -1,6 +1,27 @@
 // Home page: markup and all home styles live in this one file.
 // The slide-in animation replays every time the home section scrolls back into view.
 import { useEffect, useRef, useState } from 'react'
+import { supabase, configured } from '../lib/supabase'
+
+// Background photo is read from Supabase Storage: BUCKET / FOLDER. The newest image in the folder is used.
+const BUCKET = 'images'          // <- change to your storage bucket name
+const FOLDER = 'home-page-bg'
+const IMG = /\.(jpe?g|png|webp|avif)$/i
+
+function useStorageBg() {
+  const [url, setUrl] = useState('')
+  useEffect(() => {
+    if (!configured) return
+    let off = false
+    supabase.storage.from(BUCKET).list(FOLDER, { limit: 50, sortBy: { column: 'created_at', order: 'desc' } })
+      .then(({ data }) => {
+        const f = (data || []).find(x => IMG.test(x.name))
+        if (f && !off) setUrl(supabase.storage.from(BUCKET).getPublicUrl(FOLDER + '/' + f.name).data.publicUrl)
+      }).catch(() => {})
+    return () => { off = true }
+  }, [])
+  return url
+}
 
 const css = `
 @keyframes fromLeft  { from { opacity: 0; transform: translateX(-70px) } to { opacity: 1; transform: none } }
@@ -23,6 +44,8 @@ const css = `
 `
 
 export default function Home({ image }) {
+  const stored = useStorageBg()
+  image = stored || image
   const ref = useRef(null)
   const [inView, setInView] = useState(false)
   useEffect(() => {
