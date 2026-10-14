@@ -7,12 +7,13 @@ import { configured } from './lib/supabase'
 import Header from './components/Header'
 import AuthModal from './components/AuthModal'
 import Home from './components/Home'
-import { Gallery, About } from './components/Sections'
+import { Gallery } from './components/Sections'
+import About from './components/About'
 import { Plants } from './components/Plants'
 import { Materials } from './components/Materials'
 import { Plans } from './components/Plans'
 import { Services } from './components/Services'
-import { BookVisit, Contact } from './components/Forms'
+import { BookVisit } from './components/Forms'
 import { OrderModal, MineModal } from './components/Orders'
 import NotificationsModal from './components/NotificationsModal'
 const SERVICES = [
@@ -45,7 +46,6 @@ function Shell() {
       {(on('packages') || on('subscriptions')) && <Plans openAuth={openAuth} toast={toast} refresh={refresh} />}
       {on('booking') && <BookVisit slots={cat.slots} openAuth={openAuth} toast={toast} refresh={refresh} />}
       {on('about') && <About />}
-      {on('contact') && <Contact contact={cat.contact} />}
     </main>
     <footer><div className="wrap"><div className="logo light"><Leaf size={24} /><span><b>GTG Paradise</b><small>Grow to Green</small></span></div>
       <p>Coimbatore's trusted terrace &amp; balcony garden specialists</p><p className="copy">© {new Date().getFullYear()} GTG Paradise, Coimbatore. All rights reserved.</p></div></footer>
