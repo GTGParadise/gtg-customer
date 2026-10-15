@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Minus, Plus, Check, X as XIcon, ChevronDown } from 'lucide-react'
+import { Minus, Plus, Check, X as XIcon, ChevronDown, MessageCircle } from 'lucide-react'
 import Modal from './Modal'
 import { useAuth } from '../hooks/useAuth'
+import { useAbout } from '../hooks/useAbout'
 import { insertRow, myRows, supabase, configured } from '../lib/supabase'
 
 export function OrderModal({ plants, materials, onClose, toast, openMine }) {
@@ -42,6 +43,32 @@ const norm = s => { const k = String(s || '').toLowerCase().trim(); return ALIAS
 const when = t => t ? new Date(t).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : ''
 const G = '#1f6b3a'
 
+// Business number comes from the About record (same source as the About section): whatsapp if set, else phone.
+// Stored as a 10-digit Indian number, so +91 is added when the country code is missing.
+const waNumber = about => {
+  const d = String(about?.whatsapp || about?.phone || '').replace(/\D/g, '')
+  return d.length === 10 ? '91' + d : d
+}
+const fmtDate = t => t ? new Date(t).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''
+
+function reachUsLink(number, tab, r, name) {
+  const placed = fmtDate(r.time || r.createdAt)
+  const lines = tab === 'orders'
+    ? ['Hello GTG Paradise, I need help with my order.', '',
+       'Name: ' + (name || r.user || ''),
+       'Order number: #' + String(r.id).slice(-6),
+       'Status: ' + r.status,
+       'Order date: ' + placed]
+    : ['Hello GTG Paradise, I need help with my booking.', '',
+       'Name: ' + (name || r.user || ''),
+       'Booking: ' + (r.type === 'package' ? r.pkgName : (r.purpose || r.service || '')),
+       'Booking ref: #' + String(r.id || '').slice(-6),
+       'Status: ' + r.status,
+       'Booking date: ' + [r.date, r.slot].filter(Boolean).join(' · '),
+       'Requested on: ' + placed]
+  return 'https://wa.me/' + number + '?text=' + encodeURIComponent(lines.join('\n'))
+}
+
 function Track({ kind, row, events = [] }) {
   const steps = FLOW[kind], cur = norm(row.status), cancelled = cur === 'cancelled'
   const at = k => events.find(e => norm(e.status) === k)?.created_at
@@ -74,6 +101,7 @@ function Track({ kind, row, events = [] }) {
 export function MineModal({ onClose, tick }) {
   const { user } = useAuth(); const [tab, setTab] = useState('orders'), [rows, setRows] = useState(null), [err, setErr] = useState(false)
   const [ev, setEv] = useState({}), [open, setOpen] = useState('')
+  const { about } = useAbout(), waTo = waNumber(about)
   const kind = tab === 'orders' ? 'order' : 'enquiry'
   useEffect(() => {
     let off = false
@@ -108,6 +136,9 @@ export function MineModal({ onClose, tick }) {
             style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8, padding: 0, border: 'none', background: 'none', color: G, font: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
             {tab === 'orders' ? 'Track order' : 'Track request'}<ChevronDown size={16} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} /></button>
           {isOpen && <Track kind={kind} row={r} events={ev[String(r.id)]} />}
+          {waTo && <a href={reachUsLink(waTo, tab, r, user.name)} target="_blank" rel="noopener noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 10, padding: '8px 14px', borderRadius: 999, background: '#25D366', color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+            <MessageCircle size={16} />Reach us on WhatsApp</a>}
         </div>
       })}
   </Modal>
