@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
     supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle().then(({ data }) => setProfile(data))
   }, [session])
   const u = session?.user, m = u?.user_metadata || {}
-  const user = u && { uid: u.id, email: u.email,
+  const user = u && { id: u.id, uid: u.id, email: u.email,
     name: profile?.name || profile?.username || m.name || u.email.split('@')[0],
     whatsapp: profile?.whatsapp || m.whatsapp || '', location: profile?.location || m.location || '' }
   const signIn = (email, password) => supabase.auth.signInWithPassword({ email, password })
