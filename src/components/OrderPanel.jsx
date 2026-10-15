@@ -51,12 +51,11 @@ export default function OrderPanel({ plants = [], materials = [], onClose, toast
     const measure = () => {
       if (!bar) return
       const zi = parseInt(getComputedStyle(bar).zIndex, 10)
-      setPos({ top: Math.max(0, Math.round(bar.getBoundingClientRect().bottom)), z: Number.isFinite(zi) ? Math.max(zi - 1, 1) : 60 })
+      setPos({ top: bar.offsetHeight, z: Number.isFinite(zi) ? Math.max(zi - 1, 1) : 60 })
     }
     measure(); window.addEventListener('resize', measure)
-    const prev = document.body.style.overflow
-    document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'
-    return () => { window.removeEventListener('resize', measure); document.documentElement.style.overflow = ''; document.body.style.overflow = prev }
+    document.documentElement.style.overflow = 'hidden'   // html only, so the sticky top bar keeps working
+    return () => { window.removeEventListener('resize', measure); document.documentElement.style.overflow = '' }
   }, [])
 
   const all = useMemo(() => [

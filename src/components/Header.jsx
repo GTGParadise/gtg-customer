@@ -9,10 +9,8 @@ export default function Header({ openAuth, openOrder, openMine, right }) {
   // Freeze the page behind the menu while it is open
   useEffect(() => {
     if (!open) return
-    const prevBody = document.body.style.overflow
-    document.documentElement.style.overflow = 'hidden'
-    document.body.style.overflow = 'hidden'
-    return () => { document.documentElement.style.overflow = ''; document.body.style.overflow = prevBody }
+    document.documentElement.style.overflow = 'hidden'   // html only, so the sticky top bar keeps working
+    return () => { document.documentElement.style.overflow = '' }
   }, [open])
 
   const actions = user ? <>
