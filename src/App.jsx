@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Home as HomeIcon, Building2, Flower2, Trees, Scissors, Leaf } from 'lucide-react'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { useCatalog } from './hooks/useCatalog'
@@ -12,6 +12,8 @@ import About from './components/About'
 import SocialDock from './components/SocialDock'
 import NotificationBell from './components/NotificationBell'
 import OrderFab from './components/OrderFab'
+import ScrollTopButton from './components/ScrollTopButton'
+import { CartProvider, useCart } from './hooks/useCart'
 import { Plants } from './components/Plants'
 import { Materials } from './components/Materials'
 import { Services } from './components/Services'
@@ -33,6 +35,19 @@ function Shell() {
   const openAuth = m => setModal({ t: 'auth', m })
   const guard = fn => () => (user ? fn() : (toast('Please sign in first.'), openAuth('signin')))
   const refresh = () => setTick(t => t + 1)
+  const cart = useCart(), prevCount = useRef(0)
+  useEffect(() => {  // "+" on a card while signed out
+    const h = () => { toast('Please sign in first.'); openAuth('signin') }
+    window.addEventListener('gtg:need-auth', h); return () => window.removeEventListener('gtg:need-auth', h)
+  }, [toast])
+  useEffect(() => {  // polite refresh warning
+    if (cart.count > 0 && prevCount.current === 0) toast('Your selection is kept only until you refresh or close this page.')
+    prevCount.current = cart.count
+    if (!cart.count) return
+    const warn = e => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', warn); return () => window.removeEventListener('beforeunload', warn)
+  }, [cart.count, toast])
+  useEffect(() => { if (!user) cart.clear() }, [user])
   // Content published from the admin app (falls back to built-in content)
   const on = k => cat.site?.sections?.[k] !== false
   const services = cat.site?.services?.length ? cat.site.services.map(s => ({ i: <Leaf />, t: s.title, d: s.description })) : SERVICES
@@ -52,8 +67,9 @@ function Shell() {
     </main>
     <footer><div className="wrap"><div className="logo light"><Leaf size={24} /><span><b>GTG Paradise</b><small>Grow to Green</small></span></div>
       <p>Coimbatore's trusted terrace &amp; balcony garden specialists</p><p className="copy">© {new Date().getFullYear()} GTG Paradise, Coimbatore. All rights reserved.</p></div></footer>
-    {modal?.t !== 'order' && <SocialDock />}
-    {user && modal?.t !== 'order' && <OrderFab onClick={() => setModal({ t: 'order' })} />}
+    {!modal && <SocialDock />}
+    {user && !modal && <OrderFab count={cart.count} onClick={() => setModal({ t: 'order' })} />}
+    {!modal && <ScrollTopButton />}
     {modal?.t === 'auth' && <AuthModal mode={modal.m} onClose={() => setModal(null)} toast={toast} />}
     {modal?.t === 'order' && user && <OrderPanel plants={cat.plants} materials={cat.materials} onClose={() => setModal(null)} toast={toast} openMine={() => setModal({ t: 'mine' })} />}
     {modal?.t === 'mine' && user && <MineModal onClose={() => setModal(null)} tick={tick} />}
@@ -61,4 +77,4 @@ function Shell() {
     {toastMsg && <div className="toast" role="status">{toastMsg}</div>}
   </>
 }
-export default function App() { return <AuthProvider><Shell /></AuthProvider> }
+export default function App() { return <AuthProvider><CartProvider><Shell /></CartProvider></AuthProvider> }
