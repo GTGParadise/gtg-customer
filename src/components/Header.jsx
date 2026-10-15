@@ -18,8 +18,10 @@ export default function Header({ openAuth, openOrder, openMine, right }) {
         <a href="#home" className="logo"><Leaf size={26} /><span><b>GTG Paradise</b><small>Grow to Green</small></span></a>
         <nav className="nav-desktop">{LINKS.map(([id, t]) => <a key={id} href={'#' + id}>{t}</a>)}</nav>
         <div className="actions-desktop">{actions}</div>
-        {right}
-        <button className="icon-btn burger" onClick={() => setOpen(!open)} aria-label="Menu" aria-expanded={open}>{open ? <X /> : <Menu />}</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {right}
+          <button className="icon-btn burger" onClick={() => setOpen(!open)} aria-label="Menu" aria-expanded={open}>{open ? <X /> : <Menu />}</button>
+        </div>
       </div>
       {open && <div className="drawer">{LINKS.map(([id, t]) => <a key={id} href={'#' + id} onClick={() => setOpen(false)}>{t}</a>)}<div className="drawer-actions">{actions}</div></div>}
     </header>
