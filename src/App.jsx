@@ -14,7 +14,8 @@ import NotificationBell from './components/NotificationBell'
 import OrderFab from './components/OrderFab'
 import ScrollTopButton from './components/ScrollTopButton'
 import { CartProvider, useCart } from './hooks/useCart'
-import CatalogPage from './components/CatalogPage'
+import CatalogPage, { catOf } from './components/CatalogPage'
+import { useCatalogRows } from './hooks/useCatalogDb'
 import { Services } from './components/Services'
 import { BookVisit } from './components/Forms'
 import { MineModal } from './components/Orders'
@@ -26,9 +27,11 @@ const SERVICES = [
   { i: <Flower2 />, t: 'Balcony Gardening', d: 'Space-saving balcony gardens with vertical and railing planters.' },
   { i: <Trees />, t: 'Landscaping', d: 'Landscape planning and installation for outdoor spaces.' },
   { i: <Scissors />, t: 'Garden Maintenance', d: 'Scheduled visits for pruning, feeding, pest care and plant replacement.' }]
-const catsOf = list => [...new Set((list || []).map(x => x.category).filter(Boolean))]
+// Same category logic as the catalog page (live rows first, built-in list as fallback)
+const catsOf = (rows, fallback) => [...new Set((rows?.length ? rows : fallback || []).map(catOf).filter(c => c && c !== 'Other'))]
 function Shell() {
   const cat = useCatalog(), { user } = useAuth()
+  const plantRows = useCatalogRows('plant'), materialRows = useCatalogRows('material')
   const [modal, setModal] = useState(null), [toastMsg, setToastMsg] = useState(''), [tick, setTick] = useState(0)
   const toast = useCallback(m => { setToastMsg(m); setTimeout(() => setToastMsg(''), 4000) }, [])
   const notif = useNotifications(toast)
@@ -70,7 +73,7 @@ function Shell() {
   return <>
     <Header openAuth={openAuth} openMine={() => setModal({ t: 'mine' })}
       page={page} goPage={goPage} goHome={goHome} showPlants={on('plants')} showMaterials={on('materials')}
-      plantCats={catsOf(cat.plants)} materialCats={catsOf(cat.materials)}
+      plantCats={catsOf(plantRows, cat.plants)} materialCats={catsOf(materialRows, cat.materials)}
       right={user && <NotificationBell unread={notif.unread} onClick={() => setModal({ t: 'notifs' })} />} />
     {!configured && <div className="banner">Backend not configured: set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY. Showing built-in content; sign-in, orders and bookings are disabled.</div>}
     {cat.status === 'error' && <div className="banner">Could not load live data. Showing built-in content.</div>}
