@@ -22,6 +22,8 @@ export function useCatalogRows(kind) {
         setRows(p.data.map(r => ({
           id: r.id, name: r.name, sci: r.tamil_name || '', category: label[r.category] || r.category || 'Other',
           sort: sort[r.category] ?? 999, price: r.price, emoji: '🌿', img: pub('plants', r.image_path),
+          description: r.description || '', features: r.features || [],
+          stock_status: r.stock_status || 'In stock', care_material_ids: r.care_material_ids || [],
         })).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name)))
       } else {
         const m = await supabase.from('materials').select('*').eq('is_active', true).order('name')
@@ -29,6 +31,7 @@ export function useCatalogRows(kind) {
         if (m.error || !m.data) return setRows([])
         setRows(m.data.map(r => ({
           id: r.id, name: r.name, sci: '', category: r.category || 'Materials', price: r.price, emoji: '🧰', img: pub('materials', r.image_path),
+          description: r.description || '',
         })))
       }
     })().catch(() => { if (!off) setRows([]) })
