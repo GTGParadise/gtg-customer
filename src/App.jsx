@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Home as HomeIcon, Building2, Flower2, Trees, Scissors, Leaf } from 'lucide-react'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { useCatalog } from './hooks/useCatalog'
@@ -14,8 +14,7 @@ import NotificationBell from './components/NotificationBell'
 import OrderFab from './components/OrderFab'
 import ScrollTopButton from './components/ScrollTopButton'
 import { CartProvider, useCart } from './hooks/useCart'
-import { Plants } from './components/Plants'
-import { Materials } from './components/Materials'
+import CatalogPage from './components/CatalogPage'
 import { Services } from './components/Services'
 import { BookVisit } from './components/Forms'
 import { MineModal } from './components/Orders'
@@ -35,36 +34,49 @@ function Shell() {
   const openAuth = m => setModal({ t: 'auth', m })
   const guard = fn => () => (user ? fn() : (toast('Please sign in first.'), openAuth('signin')))
   const refresh = () => setTick(t => t + 1)
-  const cart = useCart(), prevCount = useRef(0)
+  // Simple pages: 'home' | 'plants' | 'materials' (browser back button works between them)
+  const [page, setPage] = useState('home')
+  const goPage = p => { window.history.pushState({ page: p }, ''); setPage(p); window.scrollTo(0, 0) }
+  const goHome = id => {
+    if (page !== 'home') window.history.pushState({ page: 'home' }, '')
+    setPage('home')
+    setTimeout(() => (id ? document.getElementById(id)?.scrollIntoView() : window.scrollTo(0, 0)), 60)
+  }
+  useEffect(() => {
+    const h = e => { if (e.state?.order) return; setPage(e.state?.page || 'home') }
+    window.addEventListener('popstate', h); return () => window.removeEventListener('popstate', h)
+  }, [])
+  const cart = useCart()
   useEffect(() => {  // "+" on a card while signed out
     const h = () => { toast('Please sign in first.'); openAuth('signin') }
     window.addEventListener('gtg:need-auth', h); return () => window.removeEventListener('gtg:need-auth', h)
   }, [toast])
-  useEffect(() => {  // polite refresh warning
-    if (cart.count > 0 && prevCount.current === 0) toast('Your selection is kept only until you refresh or close this page.')
-    prevCount.current = cart.count
+  useEffect(() => {  // browser prompt if the page is refreshed or closed with items selected
     if (!cart.count) return
     const warn = e => { e.preventDefault(); e.returnValue = '' }
     window.addEventListener('beforeunload', warn); return () => window.removeEventListener('beforeunload', warn)
-  }, [cart.count, toast])
+  }, [cart.count])
   useEffect(() => { if (!user) cart.clear() }, [user])
   // Content published from the admin app (falls back to built-in content)
   const on = k => cat.site?.sections?.[k] !== false
   const services = cat.site?.services?.length ? cat.site.services.map(s => ({ i: <Leaf />, t: s.title, d: s.description })) : SERVICES
   return <>
     <Header openAuth={openAuth} openOrder={() => setModal({ t: 'order' })} openMine={() => setModal({ t: 'mine' })}
+      page={page} goPage={goPage} goHome={goHome} showPlants={on('plants')} showMaterials={on('materials')}
       right={user && <NotificationBell unread={notif.unread} onClick={() => setModal({ t: 'notifs' })} />} />
     {!configured && <div className="banner">Backend not configured: set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY. Showing built-in content; sign-in, orders and bookings are disabled.</div>}
     {cat.status === 'error' && <div className="banner">Could not load live data. Showing built-in content.</div>}
+    {page === 'home' ? (
     <main>
-      {on('hero') && <Home image={cat.site?.heroImage} />}
-      {on('gallery') && <Gallery />}
-      {on('services') && <Services items={services} />}
-      {on('plants') && <Plants items={cat.plants} onOrder={guard(() => setModal({ t: 'order' }))} />}
-      {on('materials') && <Materials items={cat.materials} onOrder={guard(() => setModal({ t: 'order' }))} />}
-      {on('booking') && <BookVisit slots={cat.slots} openAuth={openAuth} toast={toast} refresh={refresh} />}
-      {on('about') && <About />}
-    </main>
+        {on('hero') && <Home image={cat.site?.heroImage} />}
+        {on('gallery') && <Gallery />}
+        {on('services') && <Services items={services} />}
+        {on('booking') && <BookVisit slots={cat.slots} openAuth={openAuth} toast={toast} refresh={refresh} />}
+        {on('about') && <About />}
+      </main>
+    ) : (
+      <CatalogPage key={page} kind={page === 'plants' ? 'plant' : 'material'} fallback={page === 'plants' ? cat.plants : cat.materials} goHome={() => goHome()} />
+    )}
     <footer><div className="wrap"><div className="logo light"><Leaf size={24} /><span><b>GTG Paradise</b><small>Grow to Green</small></span></div>
       <p>Coimbatore's trusted terrace &amp; balcony garden specialists</p><p className="copy">© {new Date().getFullYear()} GTG Paradise, Coimbatore. All rights reserved.</p></div></footer>
     {!modal && <SocialDock />}
