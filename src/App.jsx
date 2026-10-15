@@ -11,12 +11,13 @@ import { Gallery } from './components/Sections'
 import About from './components/About'
 import SocialDock from './components/SocialDock'
 import NotificationBell from './components/NotificationBell'
+import OrderFab from './components/OrderFab'
 import { Plants } from './components/Plants'
 import { Materials } from './components/Materials'
-import { Plans } from './components/Plans'
 import { Services } from './components/Services'
 import { BookVisit } from './components/Forms'
-import { OrderModal, MineModal } from './components/Orders'
+import { MineModal } from './components/Orders'
+import OrderPanel from './components/OrderPanel'
 import NotificationsModal from './components/NotificationsModal'
 const SERVICES = [
   { i: <HomeIcon />, t: 'Home Gardening', d: 'Plants, planters and care plans for home gardens and compounds.' },
@@ -46,15 +47,15 @@ function Shell() {
       {on('services') && <Services items={services} />}
       {on('plants') && <Plants items={cat.plants} onOrder={guard(() => setModal({ t: 'order' }))} />}
       {on('materials') && <Materials items={cat.materials} onOrder={guard(() => setModal({ t: 'order' }))} />}
-      {(on('packages') || on('subscriptions')) && <Plans openAuth={openAuth} toast={toast} refresh={refresh} />}
       {on('booking') && <BookVisit slots={cat.slots} openAuth={openAuth} toast={toast} refresh={refresh} />}
       {on('about') && <About />}
     </main>
     <footer><div className="wrap"><div className="logo light"><Leaf size={24} /><span><b>GTG Paradise</b><small>Grow to Green</small></span></div>
       <p>Coimbatore's trusted terrace &amp; balcony garden specialists</p><p className="copy">© {new Date().getFullYear()} GTG Paradise, Coimbatore. All rights reserved.</p></div></footer>
-    <SocialDock />
+    {modal?.t !== 'order' && <SocialDock />}
+    {user && modal?.t !== 'order' && <OrderFab onClick={() => setModal({ t: 'order' })} />}
     {modal?.t === 'auth' && <AuthModal mode={modal.m} onClose={() => setModal(null)} toast={toast} />}
-    {modal?.t === 'order' && user && <OrderModal plants={cat.plants} materials={cat.materials} onClose={() => setModal(null)} toast={toast} openMine={() => setModal({ t: 'mine' })} />}
+    {modal?.t === 'order' && user && <OrderPanel plants={cat.plants} materials={cat.materials} onClose={() => setModal(null)} toast={toast} openMine={() => setModal({ t: 'mine' })} />}
     {modal?.t === 'mine' && user && <MineModal onClose={() => setModal(null)} tick={tick} />}
     {modal?.t === 'notifs' && user && <NotificationsModal items={notif.items} markAllRead={notif.markAllRead} onClose={() => setModal(null)} />}
     {toastMsg && <div className="toast" role="status">{toastMsg}</div>}
