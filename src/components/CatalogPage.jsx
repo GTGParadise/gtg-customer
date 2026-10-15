@@ -12,7 +12,7 @@ const careOf = i => i.care || i.care_tips || i.care_instructions || i.how_to_car
 const clamp = n => ({ display: '-webkit-box', WebkitLineClamp: n, WebkitBoxOrient: 'vertical', overflow: 'hidden' })
 
 // Separate page for Plants or Materials: category dropdown, grid / list toggle, product cards.
-export default function CatalogPage({ kind, fallback = [], goHome, initialCategory = '' }) {
+export default function CatalogPage({ kind, fallback = [], goHome, initialCategory = '', openItem = () => {} }) {
   const rows = useCatalogRows(kind)
   const [cat, setCat] = useState(initialCategory || 'All')
   const [view, setView] = useState('grid')
@@ -39,40 +39,43 @@ export default function CatalogPage({ kind, fallback = [], goHome, initialCatego
 
   return (
     <main style={{ padding: '14px 12px 96px', maxWidth: 1100, margin: '0 auto' }}>
-      {/* category dropdown, centered at top */}
-      <div ref={ddRef} style={{ position: 'relative', width: 'min(100%, 320px)', margin: '0 auto 14px' }}>
-        <button type="button" onClick={() => setDd(o => !o)} aria-haspopup="listbox" aria-expanded={dd} aria-label="Category"
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', height: 42, padding: '0 14px',
-            border: '1px solid ' + (dd ? '#1f6b3a' : '#cfd8d2'), borderRadius: 10, background: '#fff', color: '#1f6b3a',
-            font: 'inherit', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: dd ? '0 0 0 3px rgba(31,107,58,.15)' : 'none' }}>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat === 'All' ? `All ${title.toLowerCase()}` : cat}</span>
-          <ChevronDown size={18} style={{ flexShrink: 0, transition: 'transform .2s', transform: dd ? 'rotate(180deg)' : 'none' }} />
-        </button>
-        {dd && <div role="listbox" style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 50, maxHeight: 280, overflowY: 'auto',
-          overscrollBehavior: 'contain', background: '#fff', border: '1px solid #e3e8e4', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.14)' }}>
-          {cats.map(c => {
-            const on = c === cat
-            return <button key={c} type="button" role="option" aria-selected={on} onClick={() => { setCat(c); setDd(false) }}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', padding: '12px 14px', border: 'none',
-                boxShadow: 'inset 0 -1px 0 #eef2ef', background: on ? '#f1f8f3' : '#fff', color: on ? '#1f6b3a' : '#1a2433',
-                font: 'inherit', fontSize: 15, fontWeight: on ? 600 : 400, textAlign: 'left', cursor: 'pointer' }}>
-              {c === 'All' ? `All ${title.toLowerCase()}` : c}{on && <Check size={16} />}
-            </button>
-          })}
-        </div>}
-      </div>
+      {/* small breadcrumb, top-left */}
+      <nav aria-label="Breadcrumb" style={{ fontSize: 12, color: '#5b6b60', marginBottom: 8, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        <a href="#home" onClick={e => { e.preventDefault(); goHome() }}>Home</a><span>/</span>
+        {cat === 'All' ? <span>{title}</span> : <a href="#" onClick={e => { e.preventDefault(); setCat('All') }}>{title}</a>}
+        {cat !== 'All' && <><span>/</span><span>{cat}</span></>}
+      </nav>
 
-      <div style={{ textAlign: 'center', marginBottom: 14 }}>
-        <h1 style={{ margin: 0, fontSize: 26, color: '#1f6b3a' }}>{cat === 'All' ? title : cat}</h1>
-        <small><a href="#home" onClick={e => { e.preventDefault(); goHome() }}>Home</a> / {title}{cat !== 'All' && ` / ${cat}`}</small>
-      </div>
+      {/* category name at the top */}
+      <h1 style={{ margin: '0 0 14px', fontSize: 26, textAlign: 'center', color: '#1f6b3a' }}>{cat === 'All' ? title : cat}</h1>
 
-      {/* count + view toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 10px' }}>
-        <span style={{ fontSize: 13, opacity: .75 }}>{rows === null ? 'Loading…' : `${shown.length} Products`}</span>
-        <div style={{ display: 'flex', border: '1px solid #cfd8d2', borderRadius: 8, overflow: 'hidden' }}>
-          <button type="button" style={toggle(view === 'grid')} onClick={() => setView('grid')} aria-label="Grid view" aria-pressed={view === 'grid'}><LayoutGrid size={18} /></button>
-          <button type="button" style={toggle(view === 'list')} onClick={() => setView('list')} aria-label="List view" aria-pressed={view === 'list'}><List size={18} /></button>
+      {/* count + small category dropdown + view toggle */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '0 0 12px' }}>
+        <span style={{ fontSize: 13, opacity: .75, whiteSpace: 'nowrap' }}>{rows === null ? 'Loading…' : `${shown.length} Products`}</span>
+        <div ref={ddRef} style={{ position: 'relative', flex: '0 1 150px', minWidth: 0 }}>
+          <button type="button" onClick={() => setDd(o => !o)} aria-haspopup="listbox" aria-expanded={dd} aria-label="Category"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, width: '100%', height: 34, padding: '0 10px',
+              border: '1px solid ' + (dd ? '#1f6b3a' : '#cfd8d2'), borderRadius: 8, background: '#fff', color: '#1f6b3a',
+              font: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer', boxShadow: dd ? '0 0 0 3px rgba(31,107,58,.15)' : 'none' }}>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat === 'All' ? `All ${title.toLowerCase()}` : cat}</span>
+            <ChevronDown size={16} style={{ flexShrink: 0, transition: 'transform .2s', transform: dd ? 'rotate(180deg)' : 'none' }} />
+          </button>
+          {dd && <div role="listbox" style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, minWidth: 200, zIndex: 50, maxHeight: 280, overflowY: 'auto',
+            overscrollBehavior: 'contain', background: '#fff', border: '1px solid #e3e8e4', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.14)' }}>
+            {cats.map(c => {
+              const on = c === cat
+              return <button key={c} type="button" role="option" aria-selected={on} onClick={() => { setCat(c); setDd(false) }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', padding: '11px 14px', border: 'none',
+                  boxShadow: 'inset 0 -1px 0 #eef2ef', background: on ? '#f1f8f3' : '#fff', color: on ? '#1f6b3a' : '#1a2433',
+                  font: 'inherit', fontSize: 14, fontWeight: on ? 600 : 400, textAlign: 'left', cursor: 'pointer' }}>
+                {c === 'All' ? `All ${title.toLowerCase()}` : c}{on && <Check size={16} />}
+              </button>
+            })}
+          </div>}
+        </div>
+        <div style={{ display: 'flex', border: '1px solid #cfd8d2', borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
+          <button type="button" style={{ ...toggle(view === 'grid'), width: 34, height: 34 }} onClick={() => setView('grid')} aria-label="Grid view" aria-pressed={view === 'grid'}><LayoutGrid size={17} /></button>
+          <button type="button" style={{ ...toggle(view === 'list'), width: 34, height: 34 }} onClick={() => setView('list')} aria-label="List view" aria-pressed={view === 'list'}><List size={17} /></button>
         </div>
       </div>
 
@@ -82,9 +85,9 @@ export default function CatalogPage({ kind, fallback = [], goHome, initialCatego
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
           {shown.map(i => (
             <article key={i.kind + i.id} style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e3e8e4', borderRadius: 10, overflow: 'hidden' }}>
-              <div style={{ width: '100%', aspectRatio: '1 / 1', overflow: 'hidden' }}>{thumb(i, '100%')}</div>
+              <div onClick={() => openItem(i)} style={{ width: '100%', aspectRatio: '1 / 1', overflow: 'hidden', cursor: 'pointer' }}>{thumb(i, '100%')}</div>
               <div style={{ padding: '8px 8px 10px', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <b style={{ fontSize: 14, lineHeight: 1.25, ...clamp(2) }}>{i.name}</b>
+                <b onClick={() => openItem(i)} style={{ fontSize: 14, lineHeight: 1.25, cursor: 'pointer', ...clamp(2) }}>{i.name}</b>
                 <span style={{ fontSize: 14, fontWeight: 600, color: '#1f6b3a' }}>{i.price ? money(i.price) : ''}</span>
                 {usesOf(i) && <span style={{ fontSize: 12, lineHeight: 1.35, color: '#4a5a50', ...clamp(2) }}>{usesOf(i)}</span>}
                 <div style={{ marginTop: 'auto', paddingTop: 6 }}><AddToCart item={i} /></div>
@@ -96,9 +99,9 @@ export default function CatalogPage({ kind, fallback = [], goHome, initialCatego
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {shown.map(i => (
             <article key={i.kind + i.id} style={{ display: 'flex', gap: 12, background: '#fff', border: '1px solid #e3e8e4', borderRadius: 10, overflow: 'hidden' }}>
-              <div style={{ width: 110, flexShrink: 0, overflow: 'hidden' }}>{thumb(i, 110)}</div>
+              <div onClick={() => openItem(i)} style={{ width: 110, flexShrink: 0, overflow: 'hidden', cursor: 'pointer' }}>{thumb(i, 110)}</div>
               <div style={{ padding: '10px 10px 10px 0', flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <b style={{ fontSize: 15, lineHeight: 1.25 }}>{i.name}</b>
+                <b onClick={() => openItem(i)} style={{ fontSize: 15, lineHeight: 1.25, cursor: 'pointer' }}>{i.name}</b>
                 {i.sci && <small style={{ fontStyle: 'italic', opacity: .7 }}>{i.sci}</small>}
                 <span style={{ fontSize: 15, fontWeight: 600, color: '#1f6b3a' }}>{i.price ? money(i.price) : ''}</span>
                 {usesOf(i) && <span style={{ fontSize: 13, lineHeight: 1.4, color: '#3d4d43' }}><b>Uses: </b>{usesOf(i)}</span>}
