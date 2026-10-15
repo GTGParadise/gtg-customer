@@ -2,56 +2,17 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { Minus, Plus, X } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useCart, cartKey } from '../hooks/useCart'
-import { insertRow, supabase, configured } from '../lib/supabase'
+import { insertRow } from '../lib/supabase'
+import { useCatalogRows } from '../hooks/useCatalogDb'
+import { useScrollLock } from '../hooks/useScrollLock'
 
 const catOf = i => i.category || i.cat || i.group || 'Other'
 const money = n => '₹' + Number(n || 0).toLocaleString('en-IN')
 
-// Plants come from the `plants` table (name, category, price, image); falls back to the catalog.
-function useDbPlants() {
-  const [rows, setRows] = useState(null)
-  useEffect(() => {
-    if (!configured) return
-    let off = false
-    ;(async () => {
-      const [p, t] = await Promise.all([
-        supabase.from('plants').select('*').eq('is_active', true).order('name'),
-        supabase.from('plant_types').select('key,label,sort_order'),
-      ])
-      if (off || p.error || !p.data?.length) return
-      const label = {}, sort = {}
-      ;(t.data || []).forEach(x => { label[x.key] = x.label || x.key; sort[x.key] = x.sort_order ?? 999 })
-      setRows(p.data.map(r => ({
-        id: r.id, name: r.name, category: label[r.category] || r.category || 'Other', sort: sort[r.category] ?? 999,
-        price: r.price, emoji: '🌿',
-        img: r.image_path ? supabase.storage.from('plants').getPublicUrl(r.image_path).data.publicUrl : '',
-      })).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name)))
-    })().catch(() => {})
-    return () => { off = true }
-  }, [])
-  return rows
-}
-
-// Materials come from the `materials` table (same source as the Materials section)
-function useDbMaterials() {
-  const [rows, setRows] = useState(null)
-  useEffect(() => {
-    if (!configured) return
-    let off = false
-    supabase.from('materials').select('*').eq('is_active', true).order('name')
-      .then(({ data, error }) => {
-        if (off || error || !data?.length) return
-        setRows(data.map(r => ({ id: r.id, name: r.name, category: r.category || 'Materials', price: r.price, emoji: '🧰',
-          img: r.image_path ? supabase.storage.from('materials').getPublicUrl(r.image_path).data.publicUrl : '' })))
-      }).catch(() => {})
-    return () => { off = true }
-  }, [])
-  return rows
-}
-
 export default function OrderPanel({ plants = [], materials = [], onClose, toast, openMine }) {
   const { user } = useAuth()
-  const dbPlants = useDbPlants(), dbMaterials = useDbMaterials()
+  const dbPlants = useCatalogRows('plant'), dbMaterials = useCatalogRows('material')
+  useScrollLock(true)
   const [step, setStep] = useState('pick')
   const [tab, setTab] = useState('plant')
   const [cat, setCat] = useState('All')
@@ -71,13 +32,12 @@ export default function OrderPanel({ plants = [], materials = [], onClose, toast
       setPos({ top: bar.offsetHeight, z: Number.isFinite(zi) ? Math.max(zi - 1, 1) : 60 })
     }
     measure(); window.addEventListener('resize', measure)
-    document.documentElement.style.overflow = 'hidden'   // html only, so the sticky top bar keeps working
-    return () => { window.removeEventListener('resize', measure); document.documentElement.style.overflow = '' }
+    return () => { window.removeEventListener('resize', measure) }
   }, [])
 
   const all = useMemo(() => [
-    ...(dbPlants || plants).map(p => ({ ...p, kind: 'plant' })),
-    ...(dbMaterials || materials).map(m => ({ ...m, kind: 'material' })),
+    ...(dbPlants?.length ? dbPlants : plants).map(p => ({ ...p, kind: 'plant' })),
+    ...(dbMaterials?.length ? dbMaterials : materials).map(m => ({ ...m, kind: 'material' })),
   ], [dbPlants, dbMaterials, plants, materials])
 
   const key = cartKey
@@ -148,7 +108,7 @@ export default function OrderPanel({ plants = [], materials = [], onClose, toast
           <button type="button" style={tabBtn(tab === 'plant')} onClick={() => { setTab('plant'); setCat('All') }}>Plants{countOf('plant') ? ` (${countOf('plant')})` : ''}</button>
           <button type="button" style={tabBtn(tab === 'material')} onClick={() => { setTab('material'); setCat('All') }}>Materials{countOf('material') ? ` (${countOf('material')})` : ''}</button>
         </div>
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '10px 16px', borderBottom: '1px solid #eee' }}>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', overscrollBehavior: 'contain', padding: '10px 16px', borderBottom: '1px solid #eee' }}>
           {cats.map(c => <button key={c} type="button" style={chip(cat === c)} onClick={() => setCat(c)}>{c}</button>)}
         </div>
         <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', padding: '8px 16px' }}>
