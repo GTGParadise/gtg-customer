@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Leaf, Menu, X, ShoppingBasket, ClipboardList, LogOut } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 const LINKS = [['home', 'Home'], ['gallery', 'Gallery'], ['services', 'Services'], ['plants', 'Plants'], ['materials', 'Materials'],
-  ['packages', 'Packages'], ['visit-booking', 'Book Visit'], ['about', 'About']]
+  ['visit-booking', 'Book Visit'], ['about', 'About']]
 export default function Header({ openAuth, openOrder, openMine, right }) {
   const { user, signOut } = useAuth(); const [open, setOpen] = useState(false)
 
