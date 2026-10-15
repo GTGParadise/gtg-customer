@@ -32,9 +32,26 @@ function useDbPlants() {
   return rows
 }
 
+// Materials come from the `materials` table (same source as the Materials section)
+function useDbMaterials() {
+  const [rows, setRows] = useState(null)
+  useEffect(() => {
+    if (!configured) return
+    let off = false
+    supabase.from('materials').select('*').eq('is_active', true).order('name')
+      .then(({ data, error }) => {
+        if (off || error || !data?.length) return
+        setRows(data.map(r => ({ id: r.id, name: r.name, category: r.category || 'Materials', price: r.price, emoji: '🧰',
+          img: r.image_path ? supabase.storage.from('materials').getPublicUrl(r.image_path).data.publicUrl : '' })))
+      }).catch(() => {})
+    return () => { off = true }
+  }, [])
+  return rows
+}
+
 export default function OrderPanel({ plants = [], materials = [], onClose, toast, openMine }) {
   const { user } = useAuth()
-  const dbPlants = useDbPlants()
+  const dbPlants = useDbPlants(), dbMaterials = useDbMaterials()
   const [step, setStep] = useState('pick')
   const [tab, setTab] = useState('plant')
   const [cat, setCat] = useState('All')
@@ -60,8 +77,8 @@ export default function OrderPanel({ plants = [], materials = [], onClose, toast
 
   const all = useMemo(() => [
     ...(dbPlants || plants).map(p => ({ ...p, kind: 'plant' })),
-    ...materials.map(m => ({ ...m, kind: 'material' })),
-  ], [dbPlants, plants, materials])
+    ...(dbMaterials || materials).map(m => ({ ...m, kind: 'material' })),
+  ], [dbPlants, dbMaterials, plants, materials])
 
   const key = cartKey
   const qty = i => cart.qty(i)

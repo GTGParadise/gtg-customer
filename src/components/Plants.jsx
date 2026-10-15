@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { supabase, configured } from '../lib/supabase'
 import { Title, Img } from './Sections'
+import AddToOrder from './AddToOrder'
 
 // Plants come from the `plants` table (photos in the `plants` Storage bucket).
 // If the table has no rows (or the backend is not configured), the `items`
@@ -20,7 +21,8 @@ function More({ shown, total, setShown }) {
 }
 
 function PlantCard({ p }) {
-  return <article className="card item">
+  return <article className="card item" style={{ position: 'relative' }}>
+    <AddToOrder item={p} kind="plant" />
     <Img cls="ratio sq" src={p.img} emoji={p.emoji} alt={p.name} />
     <div className="pad">
       <b>{p.name}</b>
@@ -60,12 +62,13 @@ export function Plants({ items = [] }) {
           name: r.name,
           sci: r.tamil_name || '',
           type: r.category || 'Other',
+          category: r.category || 'Other',
           desc: [
             days(r.harvest_days_min, r.harvest_days_max) && `Harvest in ${days(r.harvest_days_min, r.harvest_days_max)}`,
             r.container,
             r.regrows ? 'Regrows after cutting' : ''
           ].filter(Boolean).join(' · '),
-          price: null,
+          price: r.price || null,
           emoji: '🌿',
           img: r.image_path
             ? supabase.storage.from(BUCKET).getPublicUrl(r.image_path).data.publicUrl

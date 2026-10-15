@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Search, ChevronDown } from 'lucide-react'
 import { supabase, configured } from '../lib/supabase'
 import { Title, Img } from './Sections'
+import AddToOrder from './AddToOrder'
 
 // Materials come from the `materials` table (photos in the `materials` Storage bucket).
 // If the table has no rows (or the backend is not configured), the `items`
@@ -19,7 +20,8 @@ function More({ shown, total, setShown }) {
 }
 
 function MaterialCard({ p }) {
-  return <article className="card item">
+  return <article className="card item" style={{ position: 'relative' }}>
+    <AddToOrder item={p} kind="material" />
     <Img cls="ratio sq" src={p.img} emoji={p.emoji} alt={p.name} />
     <div className="pad">
       <b>{p.name}</b>
@@ -45,6 +47,7 @@ export function Materials({ items = [] }) {
         setRows(data.map(r => ({
           id: r.id,
           name: r.name,
+          category: r.category || 'Materials',
           desc: r.description || r.desc || '',
           price: r.price || null,
           emoji: '🧰',
