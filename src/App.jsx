@@ -15,6 +15,7 @@ import OrderFab from './components/OrderFab'
 import ScrollTopButton from './components/ScrollTopButton'
 import { CartProvider, useCart } from './hooks/useCart'
 import CatalogPage, { catOf } from './components/CatalogPage'
+import PlantDetail from './components/PlantDetail'
 import { useCatalogRows } from './hooks/useCatalogDb'
 import { Services } from './components/Services'
 import { BookVisit } from './components/Forms'
@@ -41,10 +42,12 @@ function Shell() {
   // Simple pages: 'home' | 'plants' | 'materials' (browser back button works between them)
   const [page, setPage] = useState('home')
   const [catFilter, setCatFilter] = useState('')
-  const goPage = (p, c = '') => { window.history.pushState({ page: p, cat: c }, ''); setPage(p); setCatFilter(c); window.scrollTo(0, 0) }
+  const [detail, setDetail] = useState(null)   // product opened from a catalog page
+  const goPage = (p, c = '') => { window.history.pushState({ page: p, cat: c }, ''); setPage(p); setCatFilter(c); setDetail(null); window.scrollTo(0, 0) }
+  const openItem = item => { window.history.pushState({ page, cat: catFilter, item }, ''); setDetail(item); window.scrollTo(0, 0) }
   const goHome = id => {
     if (page !== 'home') window.history.pushState({ page: 'home' }, '')
-    setPage('home'); setCatFilter('')
+    setPage('home'); setCatFilter(''); setDetail(null)
     setTimeout(() => (id ? document.getElementById(id)?.scrollIntoView() : window.scrollTo(0, 0)), 60)
   }
   const pickPackage = p => {
@@ -53,7 +56,7 @@ function Shell() {
     document.getElementById('visit-booking')?.scrollIntoView({ behavior: 'smooth' })
   }
   useEffect(() => {
-    const h = e => { if (e.state?.order) return; setPage(e.state?.page || 'home'); setCatFilter(e.state?.cat || '') }
+    const h = e => { if (e.state?.order) return; setPage(e.state?.page || 'home'); setCatFilter(e.state?.cat || ''); setDetail(e.state?.item || null) }
     window.addEventListener('popstate', h); return () => window.removeEventListener('popstate', h)
   }, [])
   const cart = useCart()
@@ -87,7 +90,9 @@ function Shell() {
         {on('about') && <About />}
       </main>
     ) : (
-      <CatalogPage key={page + ':' + catFilter} initialCategory={catFilter} kind={page === 'plants' ? 'plant' : 'material'} fallback={page === 'plants' ? cat.plants : cat.materials} goHome={() => goHome()} />
+      detail
+        ? <PlantDetail key={detail.id} item={detail} kind={page === 'plants' ? 'plant' : 'material'} goHome={() => goHome()} goKind={() => goPage(page)} goCategory={c => goPage(page, c)} />
+        : <CatalogPage key={page + ':' + catFilter} initialCategory={catFilter} openItem={openItem} kind={page === 'plants' ? 'plant' : 'material'} fallback={page === 'plants' ? cat.plants : cat.materials} goHome={() => goHome()} />
     )}
     <footer><div className="wrap"><div className="logo light"><Leaf size={24} /><span><b>GTG Paradise</b><small>Grow to Green</small></span></div>
       <p>Coimbatore's trusted terrace &amp; balcony garden specialists</p><p className="copy">© {new Date().getFullYear()} GTG Paradise, Coimbatore. All rights reserved.</p></div></footer>
