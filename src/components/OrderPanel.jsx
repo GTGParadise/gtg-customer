@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Minus, Plus, X } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { useCart, cartKey } from '../hooks/useCart'
 import { insertRow, supabase, configured } from '../lib/supabase'
 
 const catOf = i => i.category || i.cat || i.group || 'Other'
@@ -37,7 +38,9 @@ export default function OrderPanel({ plants = [], materials = [], onClose, toast
   const [step, setStep] = useState('pick')
   const [tab, setTab] = useState('plant')
   const [cat, setCat] = useState('All')
-  const [cart, setCart] = useState({})
+  const cart = useCart()
+  const done = useRef(false), closeRef = useRef(onClose)
+  closeRef.current = onClose
   const [notes, setNotes] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
@@ -61,20 +64,38 @@ export default function OrderPanel({ plants = [], materials = [], onClose, toast
     ...materials.map(m => ({ ...m, kind: 'material' })),
   ], [dbPlants, plants, materials])
 
-  const key = i => i.kind + i.id
-  const qty = i => cart[key(i)] || 0
-  const chg = (i, d) => setCart(c => ({ ...c, [key(i)]: Math.max(0, (c[key(i)] || 0) + d) }))
-  const picked = all.filter(i => qty(i) > 0)
-  const count = picked.reduce((s, i) => s + qty(i), 0)
-  const total = picked.reduce((s, i) => s + qty(i) * Number(i.price || 0), 0)
-  const countOf = kind => picked.filter(i => i.kind === kind).reduce((s, i) => s + qty(i), 0)
+  const key = cartKey
+  const qty = i => cart.qty(i)
+  const chg = (i, d) => cart.add({ ...i, category: catOf(i) }, d)
+  const picked = cart.lines.map(l => ({ ...l.item, qty: l.qty }))
+  const count = cart.count, total = cart.total
+  const countOf = kind => cart.lines.filter(l => l.item.kind === kind).reduce((s, l) => s + l.qty, 0)
 
   const tabItems = all.filter(i => i.kind === tab)
   const cats = ['All', ...new Set(tabItems.map(catOf))]
-  const shown = cat === 'All' ? tabItems : tabItems.filter(i => catOf(i) === cat)
-  const groups = shown.reduce((g, i) => { (g[catOf(i)] ||= []).push(i); return g }, {})
+  const inCat = i => cat === 'All' || catOf(i) === cat
+  const selLines = cart.lines.filter(l => l.item.kind === tab && inCat(l.item))
+  const selKeys = new Set(cart.lines.map(l => cartKey(l.item)))
+  const groups = {}
+  if (selLines.length) groups['Your selection'] = selLines.map(l => l.item)
+  tabItems.filter(i => inCat(i) && !selKeys.has(cartKey(i))).forEach(i => { (groups[catOf(i)] ||= []).push(i) })
+  const shown = Object.keys(groups)
 
-  const review = () => { if (!picked.length) return setErr('Add at least one plant or material.'); setErr(''); setStep('review') }
+  // Phone/browser back button: review -> list -> close
+  useEffect(() => {
+    if (window.history.state?.order !== 'pick') window.history.pushState({ order: 'pick' }, '')
+    const onPop = e => {
+      if (done.current) return
+      if (e.state?.order === 'pick') setStep('pick'); else closeRef.current()
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+  const closePanel = () => window.history.go(step === 'review' ? -2 : -1)
+  const review = () => {
+    if (!picked.length) return setErr('Add at least one plant or material.')
+    setErr(''); window.history.pushState({ order: 'review' }, ''); setStep('review')
+  }
 
   async function place() {
     if (busy) return
@@ -82,10 +103,12 @@ export default function OrderPanel({ plants = [], materials = [], onClose, toast
     try {
       await insertRow('orders', {
         id: Date.now(), userId: user.uid, user: user.name, whatsapp: user.whatsapp, location: user.location,
-        products: picked.map(i => ({ id: i.id, name: i.name, emoji: i.emoji, type: i.kind, category: catOf(i), qty: qty(i), price: Number(i.price || 0) })),
+        products: picked.map(i => ({ id: i.id, name: i.name, emoji: i.emoji, type: i.kind, category: catOf(i), qty: i.qty, price: Number(i.price || 0) })),
         total, notes: notes.trim(), time: new Date().toISOString(), status: 'pending', adminSeen: false,
       })
-      toast('Order placed. We will contact you shortly.'); onClose(); openMine()
+      toast('Order placed. We will contact you shortly.'); cart.clear(); done.current = true
+      const h = () => { window.removeEventListener('popstate', h); closeRef.current(); openMine() }
+      window.addEventListener('popstate', h); window.history.go(-2)
     } catch (e) { setErr('Failed to place order: ' + (e.message || 'please try again.')); setBusy(false) }
   }
 
@@ -101,7 +124,7 @@ export default function OrderPanel({ plants = [], materials = [], onClose, toast
       style={{ position: 'fixed', top: pos.top, left: 0, right: 0, bottom: 0, zIndex: pos.z, background: '#fff', color: '#1a1a1a', display: 'flex', flexDirection: 'column', boxShadow: '0 -2px 12px rgba(0,0,0,.2)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid #e5e5e5' }}>
         <h3 style={{ margin: 0 }}>{step === 'pick' ? 'Place an order' : 'Review your order'}</h3>
-        <button className="icon-btn" onClick={onClose} aria-label="Close order window"><X /></button>
+        <button className="icon-btn" onClick={closePanel} aria-label="Close order window"><X /></button>
       </div>
 
       {step === 'pick' ? <>
@@ -114,7 +137,7 @@ export default function OrderPanel({ plants = [], materials = [], onClose, toast
         </div>
         <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', padding: '8px 16px' }}>
           {!shown.length && <p className="muted center">Nothing available here right now.</p>}
-          {Object.entries(groups).map(([name, list]) => (
+          {shown.map(name => { const list = groups[name]; return (
             <div key={name} style={{ marginBottom: 12 }}>
               <h4 style={{ margin: '12px 0 4px', color: '#1f6b3a' }}>{name}</h4>
               {list.map(i => (
@@ -129,9 +152,10 @@ export default function OrderPanel({ plants = [], materials = [], onClose, toast
                 </div>
               ))}
             </div>
-          ))}
+          )})}
         </div>
         <div style={{ padding: '10px 16px calc(10px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid #e5e5e5' }}>
+          <small style={{ display: 'block', marginBottom: 6, opacity: .75 }}>Your selection is kept only until you refresh or close this page.</small>
           {err && <p className="err box" role="alert">{err}</p>}
           <button className="btn primary full" onClick={review}>Review order{count ? ` (${count} items${total ? ' · ' + money(total) : ''})` : ''}</button>
         </div>
@@ -140,8 +164,8 @@ export default function OrderPanel({ plants = [], materials = [], onClose, toast
           {picked.map(i => (
             <div key={key(i)} style={line}>
               {thumb(i)}
-              <span style={{ flex: 1, minWidth: 0 }}>{i.name}<small style={{ display: 'block', opacity: .75 }}>{qty(i)} × {i.price ? money(i.price) : 'price on request'}</small></span>
-              <b>{i.price ? money(qty(i) * i.price) : ''}</b>
+              <span style={{ flex: 1, minWidth: 0 }}>{i.name}<small style={{ display: 'block', opacity: .75 }}>{i.qty} × {i.price ? money(i.price) : 'price on request'}</small></span>
+              <b>{i.price ? money(i.qty * i.price) : ''}</b>
             </div>
           ))}
           <div style={{ ...line, borderBottom: 0, fontSize: 18 }}><b>Total ({count} items)</b><b>{total ? money(total) : 'We will confirm the price'}</b></div>
@@ -152,7 +176,7 @@ export default function OrderPanel({ plants = [], materials = [], onClose, toast
         <div style={{ padding: '10px 16px calc(10px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid #e5e5e5', display: 'flex', gap: 8, flexDirection: 'column' }}>
           {err && <p className="err box" role="alert">{err}</p>}
           <button className="btn primary full" onClick={place} disabled={busy}>{busy ? 'Placing order…' : 'Confirm order'}</button>
-          <button className="btn outline full" onClick={() => setStep('pick')} disabled={busy}>Back to edit</button>
+          <button className="btn outline full" onClick={() => window.history.back()} disabled={busy}>Back to edit</button>
         </div>
       </>}
     </div>
