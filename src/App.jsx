@@ -73,10 +73,12 @@ function Shell() {
   useEffect(() => { if (!user) cart.clear() }, [user])
   // Content published from the admin app (falls back to built-in content)
   const on = k => cat.site?.sections?.[k] !== false
+  const brand = cat.site?.brand, brandName = brand?.name || 'GTG Paradise'
+  useEffect(() => { document.title = brandName }, [brandName])
   const services = cat.site?.services?.length ? cat.site.services.map(s => ({ i: <Leaf />, t: s.title, d: s.description })) : SERVICES
   return <>
     <Header openAuth={openAuth} openMine={() => setModal({ t: 'mine' })}
-      page={page} goPage={goPage} goHome={goHome} showPlants={on('plants')} showMaterials={on('materials')}
+      brand={brand} page={page} goPage={goPage} goHome={goHome} showPlants={on('plants')} showMaterials={on('materials')}
       plantCats={catsOf(plantRows, cat.plants)} materialCats={catsOf(materialRows, cat.materials)}
       right={user && <NotificationBell unread={notif.unread} onClick={() => setModal({ t: 'notifs' })} />} />
     {!configured && <div className="banner">Backend not configured: set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY. Showing built-in content; sign-in, orders and bookings are disabled.</div>}
@@ -96,8 +98,8 @@ function Shell() {
         ? <PlantDetail key={detail.id} item={detail} kind={page === 'plants' ? 'plant' : 'material'} goHome={() => goHome()} goKind={() => goPage(page)} goCategory={c => goPage(page, c)} />
         : <CatalogPage key={page + ':' + catFilter} initialCategory={catFilter} openItem={openItem} kind={page === 'plants' ? 'plant' : 'material'} fallback={page === 'plants' ? cat.plants : cat.materials} goHome={() => goHome()} />
     )}
-    <footer><div className="wrap"><div className="logo light"><Leaf size={24} /><span><b>GTG Paradise</b><small>Grow to Green</small></span></div>
-      <p>Coimbatore's trusted terrace &amp; balcony garden specialists</p><p className="copy">© {new Date().getFullYear()} GTG Paradise, Coimbatore. All rights reserved.</p></div></footer>
+    <footer><div className="wrap"><div className="logo light">{brand?.logo ? <img src={brand.logo} alt="" style={{ height: 32, width: 'auto', maxWidth: 120, objectFit: 'contain' }} /> : <Leaf size={24} />}<span><b>{brandName}</b>{(brand ? brand.tagline : 'Grow to Green') ? <small>{brand ? brand.tagline : 'Grow to Green'}</small> : null}</span></div>
+      <p>Coimbatore's trusted terrace &amp; balcony garden specialists</p><p className="copy">© {new Date().getFullYear()} {brandName}, Coimbatore. All rights reserved.</p></div></footer>
     {!modal && <SocialDock />}
     {user && !modal && <OrderFab count={cart.count} onClick={() => setModal({ t: 'order' })} />}
     {!modal && <ScrollTopButton />}
