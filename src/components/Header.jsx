@@ -10,7 +10,7 @@ const greeting = () => {
 }
 
 export default function Header({ openAuth, openMine, right, page = 'home', goPage = () => {}, goHome = () => {},
-  showPlants = true, showMaterials = true, plantCats = [], materialCats = [] }) {
+  showPlants = true, showMaterials = true, plantCats = [], materialCats = [], brand }) {
   const { user, signOut } = useAuth()
   const [show, setShow] = useState(false)   // drawer mounted
   const [open, setOpen] = useState(false)   // drawer slid in
@@ -95,7 +95,7 @@ export default function Header({ openAuth, openMine, right, page = 'home', goPag
   return (
     <header className="topbar">
       <div className="bar">
-        <a href="#home" className="logo" onClick={e => { if (page !== 'home') { e.preventDefault(); goHome() } }}><Leaf size={26} /><span><b>GTG Paradise</b><small>Grow to Green</small></span></a>
+        <a href="#home" className="logo" onClick={e => { if (page !== 'home') { e.preventDefault(); goHome() } }}>{brand?.logo ? <img src={brand.logo} alt="" style={{ height: 36, width: 'auto', maxWidth: 120, objectFit: 'contain' }} /> : <Leaf size={26} />}<span><b>{brand?.name || 'GTG Paradise'}</b>{(brand ? brand.tagline : 'Grow to Green') ? <small>{brand ? brand.tagline : 'Grow to Green'}</small> : null}</span></a>
         <nav className="nav-desktop">{nav.map(n => link(n))}</nav>
         <div className="actions-desktop">{actions}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
