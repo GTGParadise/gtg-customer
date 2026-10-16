@@ -55,9 +55,9 @@ export default function Home({ image }) {
     io.observe(el)
     return () => io.disconnect()
   }, [])
-  // Background photo from the database; the green overlay keeps the text readable
+  // Background photo from the database; a light dark overlay keeps the text readable (edit the two rgba values to make it lighter or darker)
   const bg = image ? {
-    backgroundImage: 'linear-gradient(rgba(20,83,45,.78), rgba(20,83,45,.78)), url("' + String(image).replace(/"/g, '%22') + '")',
+    backgroundImage: 'linear-gradient(rgba(0,0,0,.30), rgba(0,0,0,.55)), url("' + String(image).replace(/"/g, '%22') + '")',
     backgroundSize: 'cover', backgroundPosition: 'center'
   } : undefined
   return <>
