@@ -9,6 +9,7 @@ import AuthModal from './components/AuthModal'
 import Home from './components/Home'
 import { Gallery, Packages } from './components/Sections'
 import About from './components/About'
+import Plans from './components/Plans'
 import SocialDock from './components/SocialDock'
 import NotificationBell from './components/NotificationBell'
 import OrderFab from './components/OrderFab'
@@ -85,6 +86,7 @@ function Shell() {
         {on('hero') && <Home image={cat.site?.heroImage} />}
         {on('gallery') && <Gallery />}
         {on('services') && <Services items={services} />}
+        {on('subscriptions') && <Plans openAuth={openAuth} toast={toast} refresh={refresh} />}
         {on('packages') && cat.packages?.length > 0 && <Packages items={cat.packages} onPick={pickPackage} />}
         {on('booking') && <BookVisit slots={cat.slots} openAuth={openAuth} toast={toast} refresh={refresh} />}
         {on('about') && <About />}
