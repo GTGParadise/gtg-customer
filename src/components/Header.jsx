@@ -95,7 +95,7 @@ export default function Header({ openAuth, openMine, right, page = 'home', goPag
   return (
     <header className="topbar">
       <div className="bar">
-        <a href="#home" className="logo" onClick={e => { if (page !== 'home') { e.preventDefault(); goHome() } }}>{brand?.logo ? <img src={brand.logo} alt="" style={{ height: 36, width: 'auto', maxWidth: 120, objectFit: 'contain' }} /> : <Leaf size={26} />}<span><b>{brand?.name || 'GTG Paradise'}</b>{(brand ? brand.tagline : 'Grow to Green') ? <small>{brand ? brand.tagline : 'Grow to Green'}</small> : null}</span></a>
+        <a href="#home" className="logo" onClick={e => { if (page !== 'home') { e.preventDefault(); goHome() } }}>{brand?.logo ? <img src={brand.logo} alt="" style={{ height: 56, width: 'auto', maxWidth: 190, objectFit: 'contain' }} /> : <Leaf size={26} />}<span><b>{brand?.name || 'GTG Paradise'}</b>{(brand ? brand.tagline : 'Grow to Green') ? <small>{brand ? brand.tagline : 'Grow to Green'}</small> : null}</span></a>
         <nav className="nav-desktop">{nav.map(n => link(n))}</nav>
         <div className="actions-desktop">{actions}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
