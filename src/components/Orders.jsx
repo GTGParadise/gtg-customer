@@ -36,6 +36,7 @@ export function OrderModal({ plants, materials, onClose, toast, openMine }) {
 const FLOW = {
   order: [['pending', 'Order placed'], ['confirmed', 'Confirmed'], ['packed', 'Packed'], ['shipped', 'Out for delivery'], ['delivered', 'Delivered']],
   enquiry: [['pending', 'Request received'], ['confirmed', 'Confirmed'], ['completed', 'Completed']],
+  subscription: [['pending', 'Subscription requested'], ['confirmed', 'Confirmed'], ['active', 'Active']],
 }
 const ALIAS = { placed: 'pending', new: 'pending', accepted: 'confirmed', approved: 'confirmed', processing: 'packed',
   dispatched: 'shipped', 'out for delivery': 'shipped', out_for_delivery: 'shipped', done: 'completed', rejected: 'cancelled', canceled: 'cancelled' }
@@ -59,6 +60,12 @@ function reachUsLink(number, tab, r, name) {
        'Order number: #' + String(r.id).slice(-6),
        'Status: ' + r.status,
        'Order date: ' + placed]
+    : tab === 'plans'
+    ? ['Hello GTG Paradise, I need help with my plan.', '',
+       'Name: ' + (name || ''),
+       'Plan: ' + r.planName,
+       'Status: ' + r.status,
+       'Requested on: ' + placed]
     : ['Hello GTG Paradise, I need help with my booking.', '',
        'Name: ' + (name || r.user || ''),
        'Booking: ' + (r.type === 'package' ? r.pkgName : (r.purpose || r.service || '')),
@@ -98,15 +105,27 @@ function Track({ kind, row, events = [] }) {
   </div>
 }
 
+// Plan subscriptions live in customer_subscriptions (+ subscription_plans for the name / price)
+async function loadRows(tab, uid) {
+  if (tab !== 'plans') return myRows(tab === 'orders' ? 'orders' : 'enquiry', uid)
+  const { data, error } = await supabase.from('customer_subscriptions').select('*').eq('user_id', uid)
+  if (error) throw error
+  const ids = [...new Set((data || []).map(x => x.plan_id))]
+  const { data: plans } = ids.length ? await supabase.from('subscription_plans').select('id,name,price,period').in('id', ids) : { data: [] }
+  const pm = new Map((plans || []).map(x => [x.id, x]))
+  return (data || []).map(x => ({ id: x.id, status: x.status || 'pending', createdAt: x.created_at, planName: pm.get(x.plan_id)?.name || 'Plan',
+    price: pm.get(x.plan_id)?.price, period: pm.get(x.plan_id)?.period })).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
+}
+
 export function MineModal({ onClose, tick }) {
   const { user } = useAuth(); const [tab, setTab] = useState('orders'), [rows, setRows] = useState(null), [err, setErr] = useState(false)
   const [ev, setEv] = useState({}), [open, setOpen] = useState('')
   const { about } = useAbout(), waTo = waNumber(about)
-  const kind = tab === 'orders' ? 'order' : 'enquiry'
+  const kind = tab === 'orders' ? 'order' : tab === 'plans' ? 'subscription' : 'enquiry'
   useEffect(() => {
     let off = false
     setRows(null); setErr(false); setEv({}); setOpen('')
-    myRows(tab === 'orders' ? 'orders' : 'enquiry', user.uid).then(async list => {
+    loadRows(tab, user.uid).then(async list => {
       if (off) return
       setRows(list)
       if (!list.length || !configured) return
@@ -120,21 +139,23 @@ export function MineModal({ onClose, tick }) {
     return () => { off = true }
   }, [tab, user.uid, tick])
   return <Modal title="My orders & bookings" onClose={onClose} wide>
-    <div className="tabs"><button className={tab === 'orders' ? 'on' : ''} onClick={() => setTab('orders')}>My Orders</button><button className={tab === 'bookings' ? 'on' : ''} onClick={() => setTab('bookings')}>My Bookings &amp; Requests</button></div>
+    <div className="tabs"><button className={tab === 'orders' ? 'on' : ''} onClick={() => setTab('orders')}>My Orders</button><button className={tab === 'bookings' ? 'on' : ''} onClick={() => setTab('bookings')}>My Bookings &amp; Requests</button><button className={tab === 'plans' ? 'on' : ''} onClick={() => setTab('plans')}>My Plans</button></div>
     {err ? <p className="err box">Could not load. Please try again.</p> : !rows ? <p className="muted center">Loading…</p> : !rows.length ? <p className="muted center">Nothing here yet.</p> :
       rows.map(r => {
         const id = String(r.id || r.time || r.createdAt), isOpen = open === id
         return <div key={id} className="card pad rec">
-          <div className="rec-h"><b>{tab === 'orders' ? 'Order #' + String(r.id).slice(-6) : r.type === 'package' ? r.pkgName : (r.purpose || r.service)}</b><span className={'st ' + r.status}>{r.status}</span></div>
+          <div className="rec-h"><b>{tab === 'orders' ? 'Order #' + String(r.id).slice(-6) : tab === 'plans' ? r.planName + ' plan' : r.type === 'package' ? r.pkgName : (r.purpose || r.service)}</b><span className={'st ' + r.status}>{r.status}</span></div>
           {tab === 'orders'
             ? <>{(r.products || []).map((p, n) => <div key={n} style={{ fontSize: 14 }}>{p.emoji} {p.name} × {p.qty}</div>)}
                 {r.total ? <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4 }}>Total ₹{Number(r.total).toLocaleString('en-IN')}</div> : null}
                 {r.location && <small className="muted">Deliver to: {r.location}</small>}</>
-            : <p>{r.date} · {r.slot}</p>}
+            : tab === 'plans'
+              ? (r.price ? <p>₹{Number(r.price).toLocaleString('en-IN')}{r.period ? ' / ' + r.period : ''}</p> : null)
+              : <p>{r.date} · {r.slot}</p>}
           <div><small className="muted">{new Date(r.time || r.createdAt).toLocaleString('en-IN')}</small></div>
           <button type="button" onClick={() => setOpen(isOpen ? '' : id)} aria-expanded={isOpen}
             style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8, padding: 0, border: 'none', background: 'none', color: G, font: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
-            {tab === 'orders' ? 'Track order' : 'Track request'}<ChevronDown size={16} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} /></button>
+            {tab === 'orders' ? 'Track order' : tab === 'plans' ? 'Track plan' : 'Track request'}<ChevronDown size={16} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} /></button>
           {isOpen && <Track kind={kind} row={r} events={ev[String(r.id)]} />}
           {waTo && <a href={reachUsLink(waTo, tab, r, user.name)} target="_blank" rel="noopener noreferrer"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 10, padding: '8px 14px', borderRadius: 999, background: '#25D366', color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
