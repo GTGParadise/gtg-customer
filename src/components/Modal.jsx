@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
+import { useScrollLock } from '../hooks/useScrollLock'
 export default function Modal({ title, onClose, children, wide }) {
+  useScrollLock(true)
   useEffect(() => {
     const k = e => e.key === 'Escape' && onClose()
     document.addEventListener('keydown', k); document.body.style.overflow = 'hidden'

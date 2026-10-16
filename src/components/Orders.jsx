@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Minus, Plus, Check, X as XIcon, ChevronDown, MessageCircle } from 'lucide-react'
 import Modal from './Modal'
 import { useAuth } from '../hooks/useAuth'
@@ -117,9 +117,11 @@ async function loadRows(tab, uid) {
     price: pm.get(x.plan_id)?.price, period: pm.get(x.plan_id)?.period })).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
 }
 
-export function MineModal({ onClose, tick }) {
-  const { user } = useAuth(); const [tab, setTab] = useState('orders'), [rows, setRows] = useState(null), [err, setErr] = useState(false)
-  const [ev, setEv] = useState({}), [open, setOpen] = useState('')
+// Works as a full page (App shows it between the site header and footer) and keeps a modal wrapper for any older use.
+export function MineView({ tick, initialTab = 'orders', focus = null }) {
+  const { user } = useAuth(); const [tab, setTab] = useState(initialTab), [rows, setRows] = useState(null), [err, setErr] = useState(false)
+  const [ev, setEv] = useState({}), [open, setOpen] = useState(''), [hl, setHl] = useState('')
+  const cardRefs = useRef({})
   const { about } = useAbout(), waTo = waNumber(about)
   const kind = tab === 'orders' ? 'order' : tab === 'plans' ? 'subscription' : 'enquiry'
   useEffect(() => {
@@ -138,12 +140,22 @@ export function MineModal({ onClose, tick }) {
     }).catch(() => !off && setErr(true))
     return () => { off = true }
   }, [tab, user.uid, tick])
-  return <Modal title="My orders & bookings" onClose={onClose} wide>
+  useEffect(() => {   // coming from a notification: open and highlight the matching record
+    if (!rows || !focus || focus.tab !== tab) return
+    const m = tab === 'orders' ? (focus.last6 && rows.find(r => String(r.id).endsWith(String(focus.last6))))
+      : tab === 'bookings' ? (focus.date && rows.find(r => r.date === focus.date))
+      : rows[0]
+    if (!m) return
+    const id = String(m.id || m.time || m.createdAt)
+    setOpen(id); setHl(id)
+    setTimeout(() => cardRefs.current[id]?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 120)
+  }, [rows, focus, tab])
+  return <>
     <div className="tabs"><button className={tab === 'orders' ? 'on' : ''} onClick={() => setTab('orders')}>My Orders</button><button className={tab === 'bookings' ? 'on' : ''} onClick={() => setTab('bookings')}>My Bookings &amp; Requests</button><button className={tab === 'plans' ? 'on' : ''} onClick={() => setTab('plans')}>My Plans</button></div>
     {err ? <p className="err box">Could not load. Please try again.</p> : !rows ? <p className="muted center">Loading…</p> : !rows.length ? <p className="muted center">Nothing here yet.</p> :
       rows.map(r => {
         const id = String(r.id || r.time || r.createdAt), isOpen = open === id
-        return <div key={id} className="card pad rec">
+        return <div key={id} ref={el => { cardRefs.current[id] = el }} className="card pad rec" style={hl === id ? { borderColor: G, boxShadow: '0 0 0 3px rgba(31,107,58,.18)' } : undefined}>
           <div className="rec-h"><b>{tab === 'orders' ? 'Order #' + String(r.id).slice(-6) : tab === 'plans' ? r.planName + ' plan' : r.type === 'package' ? r.pkgName : (r.purpose || r.service)}</b><span className={'st ' + r.status}>{r.status}</span></div>
           {tab === 'orders'
             ? <>{(r.products || []).map((p, n) => <div key={n} style={{ fontSize: 14 }}>{p.emoji} {p.name} × {p.qty}</div>)}
@@ -162,5 +174,9 @@ export function MineModal({ onClose, tick }) {
             <MessageCircle size={16} />Reach us on WhatsApp</a>}
         </div>
       })}
-  </Modal>
+  </>
+}
+
+export function MineModal({ onClose, tick }) {
+  return <Modal title="My orders & bookings" onClose={onClose} wide><MineView tick={tick} /></Modal>
 }
