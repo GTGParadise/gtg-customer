@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Home as HomeIcon, Building2, Flower2, Trees, Scissors, Leaf } from 'lucide-react'
+import { Home as HomeIcon, Building2, Flower2, Trees, Scissors, Leaf, ArrowLeft } from 'lucide-react'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { useCatalog } from './hooks/useCatalog'
 import { useNotifications } from './hooks/useNotifications'
@@ -20,7 +20,7 @@ import PlantDetail from './components/PlantDetail'
 import { useCatalogRows } from './hooks/useCatalogDb'
 import { Services } from './components/Services'
 import { BookVisit } from './components/Forms'
-import { MineModal } from './components/Orders'
+import { MineView } from './components/Orders'
 import OrderPanel from './components/OrderPanel'
 import NotificationsModal from './components/NotificationsModal'
 const SERVICES = [
@@ -44,8 +44,15 @@ function Shell() {
   const [page, setPage] = useState('home')
   const [catFilter, setCatFilter] = useState('')
   const [detail, setDetail] = useState(null)   // product opened from a catalog page
+  const [mine, setMine] = useState({ tab: 'orders', focus: null, k: 0 })   // 'mine' page: which tab / record to show
   const goPage = (p, c = '') => { window.history.pushState({ page: p, cat: c }, ''); setPage(p); setCatFilter(c); setDetail(null); window.scrollTo(0, 0) }
   const openItem = item => { window.history.pushState({ page, cat: catFilter, item }, ''); setDetail(item); window.scrollTo(0, 0) }
+  // My orders / bookings / plans as a full page (header and footer stay). Used by the menu and by notifications.
+  const goMine = (tab = 'orders', focus = null) => {
+    const m = { tab, focus, k: Date.now() }
+    window.history.pushState({ page: 'mine', mine: m }, '')
+    setModal(null); setMine(m); setPage('mine'); setCatFilter(''); setDetail(null); window.scrollTo(0, 0)
+  }
   const goHome = id => {
     if (page !== 'home') window.history.pushState({ page: 'home' }, '')
     setPage('home'); setCatFilter(''); setDetail(null)
@@ -57,7 +64,7 @@ function Shell() {
     document.getElementById('visit-booking')?.scrollIntoView({ behavior: 'smooth' })
   }
   useEffect(() => {
-    const h = e => { if (e.state?.order) return; setPage(e.state?.page || 'home'); setCatFilter(e.state?.cat || ''); setDetail(e.state?.item || null) }
+    const h = e => { if (e.state?.order) return; setPage(e.state?.page || 'home'); setCatFilter(e.state?.cat || ''); setDetail(e.state?.item || null); if (e.state?.mine) setMine(e.state.mine) }
     window.addEventListener('popstate', h); return () => window.removeEventListener('popstate', h)
   }, [])
   const cart = useCart()
@@ -71,13 +78,14 @@ function Shell() {
     window.addEventListener('beforeunload', warn); return () => window.removeEventListener('beforeunload', warn)
   }, [cart.count])
   useEffect(() => { if (!user) cart.clear() }, [user])
+  useEffect(() => { if (!user && page === 'mine') goHome() }, [user, page])
   // Content published from the admin app (falls back to built-in content)
   const on = k => cat.site?.sections?.[k] !== false
   const brand = cat.site?.brand, brandName = brand?.name || 'GTG Paradise'
   useEffect(() => { document.title = brandName }, [brandName])
   const services = cat.site?.services?.length ? cat.site.services.map(s => ({ i: <Leaf />, t: s.title, d: s.description })) : SERVICES
   return <>
-    <Header openAuth={openAuth} openMine={() => setModal({ t: 'mine' })}
+    <Header openAuth={openAuth} openMine={() => goMine()}
       brand={brand} page={page} goPage={goPage} goHome={goHome} showPlants={on('plants')} showMaterials={on('materials')}
       plantCats={catsOf(plantRows, cat.plants)} materialCats={catsOf(materialRows, cat.materials)}
       right={user && <NotificationBell unread={notif.unread} onClick={() => setModal({ t: 'notifs' })} />} />
@@ -93,6 +101,13 @@ function Shell() {
         {on('booking') && <BookVisit slots={cat.slots} openAuth={openAuth} toast={toast} refresh={refresh} />}
         {on('about') && <About />}
       </main>
+    ) : page === 'mine' ? (
+      <main><section style={{ paddingTop: 28 }}><div className="wrap" style={{ maxWidth: 760 }}>
+        <button className="btn ghost" style={{ marginLeft: -12 }} onClick={() => window.history.back()}><ArrowLeft size={18} /> Back</button>
+        <h2 style={{ fontSize: 'clamp(24px,4vw,32px)', margin: '4px 0 16px' }}>My orders &amp; bookings</h2>
+        {user ? <MineView key={mine.k} tick={tick} initialTab={mine.tab} focus={mine.focus} />
+          : <p className="muted">Please sign in to see your orders and bookings.</p>}
+      </div></section></main>
     ) : (
       detail
         ? <PlantDetail key={detail.id} item={detail} kind={page === 'plants' ? 'plant' : 'material'} goHome={() => goHome()} goKind={() => goPage(page)} goCategory={c => goPage(page, c)} />
@@ -104,9 +119,8 @@ function Shell() {
     {user && !modal && <OrderFab count={cart.count} onClick={() => setModal({ t: 'order' })} />}
     {!modal && <ScrollTopButton />}
     {modal?.t === 'auth' && <AuthModal mode={modal.m} onClose={() => setModal(null)} toast={toast} />}
-    {modal?.t === 'order' && user && <OrderPanel plants={cat.plants} materials={cat.materials} onClose={() => setModal(null)} toast={toast} openMine={() => setModal({ t: 'mine' })} />}
-    {modal?.t === 'mine' && user && <MineModal onClose={() => setModal(null)} tick={tick} />}
-    {modal?.t === 'notifs' && user && <NotificationsModal items={notif.items} markAllRead={notif.markAllRead} onClose={() => setModal(null)} />}
+    {modal?.t === 'order' && user && <OrderPanel plants={cat.plants} materials={cat.materials} onClose={() => setModal(null)} toast={toast} openMine={() => goMine()} />}
+    {modal?.t === 'notifs' && user && <NotificationsModal items={notif.items} markAllRead={notif.markAllRead} onClose={() => setModal(null)} onOpen={t => goMine(t.tab, t.focus)} />}
     {toastMsg && <div className="toast" role="status">{toastMsg}</div>}
   </>
 }
