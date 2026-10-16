@@ -20,11 +20,12 @@ export function useNotifications(toast) {
     return () => { active = false; supabase.removeChannel(ch) }
   }, [user, toast])
 
+  const uid = user?.id
   const markAllRead = useCallback(async () => {
-    if (!supabase) return
-    await supabase.from('notifications').update({ read: true }).eq('read', false)
+    if (!supabase || !uid) return
+    await supabase.from('notifications').update({ read: true }).eq('user_id', uid).eq('read', false)
     setItems(l => l.map(n => ({ ...n, read: true })))
-  }, [])
+  }, [uid])
 
   return { items, unread: items.filter(n => !n.read).length, markAllRead }
 }
