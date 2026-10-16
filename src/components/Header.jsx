@@ -27,7 +27,7 @@ export default function Header({ openAuth, openMine, right, page = 'home', goPag
   // [id, label, isSeparatePage]
   const top = [['home', 'Home'], ['gallery', 'Gallery'], ['services', 'Services'],
     ...(showPlants ? [['plants', 'Plants', true]] : []), ...(showMaterials ? [['materials', 'Materials', true]] : []),
-    ['packages', 'Packages'], ['visit-booking', 'Book Visit']]
+    ['subscriptions', 'Plans'], ['packages', 'Packages'], ['visit-booking', 'Book Visit']]
   const about = ['about', 'About']
   const nav = [...top, about]   // desktop bar
 

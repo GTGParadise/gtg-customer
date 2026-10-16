@@ -137,14 +137,14 @@ export function Plans({ openAuth, toast, refresh }) {
     setPick(p)
   }
 
-  return <section id="packages"><div className="wrap">
+  return <section id="subscriptions"><div className="wrap">
     <Title tag="Subscription Plans" h="Choose Your Plan" p="Pick a plan, then choose your own plant varieties" />
     <Snap>{plans.map(p => {
       const total = p.allowances.reduce((s, a) => s + a.count, 0)
       return <article key={p.id} className={'card pad pkg' + (p.is_featured ? ' feat' : '')}>
         {p.is_featured && <span className="badge">Most popular</span>}
         <h3>{p.name}</h3>
-        <div className="pkg-price">₹{Number(p.price).toLocaleString('en-IN')}<small> / {p.period}</small></div>
+        <div className="pkg-price">{p.price != null && p.price !== '' ? <>₹{Number(p.price).toLocaleString('en-IN')}{p.period && <small> / {p.period}</small>}</> : <small>Price on request</small>}</div>
         <ul>
           <li><b>{total} plant varieties</b></li>
           {p.allowances.map(a => <li key={a.key}>{a.count} × {a.label}</li>)}
