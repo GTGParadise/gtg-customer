@@ -98,7 +98,7 @@ function Shell() {
         ? <PlantDetail key={detail.id} item={detail} kind={page === 'plants' ? 'plant' : 'material'} goHome={() => goHome()} goKind={() => goPage(page)} goCategory={c => goPage(page, c)} />
         : <CatalogPage key={page + ':' + catFilter} initialCategory={catFilter} openItem={openItem} kind={page === 'plants' ? 'plant' : 'material'} fallback={page === 'plants' ? cat.plants : cat.materials} goHome={() => goHome()} />
     )}
-    <footer><div className="wrap"><div className="logo light">{brand?.logo ? <img src={brand.logo} alt="" style={{ height: 32, width: 'auto', maxWidth: 120, objectFit: 'contain' }} /> : <Leaf size={24} />}<span><b>{brandName}</b>{(brand ? brand.tagline : 'Grow to Green') ? <small>{brand ? brand.tagline : 'Grow to Green'}</small> : null}</span></div>
+    <footer><div className="wrap"><div className="logo light">{brand?.logo ? <img src={brand.logo} alt="" style={{ height: 56, width: 'auto', maxWidth: 190, objectFit: 'contain' }} /> : <Leaf size={24} />}<span><b>{brandName}</b>{(brand ? brand.tagline : 'Grow to Green') ? <small>{brand ? brand.tagline : 'Grow to Green'}</small> : null}</span></div>
       <p>Coimbatore's trusted terrace &amp; balcony garden specialists</p><p className="copy">© {new Date().getFullYear()} {brandName}, Coimbatore. All rights reserved.</p></div></footer>
     {!modal && <SocialDock />}
     {user && !modal && <OrderFab count={cart.count} onClick={() => setModal({ t: 'order' })} />}
